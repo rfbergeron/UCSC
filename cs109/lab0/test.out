@@ -1,0 +1,19 @@
+Execname: hello, Compiled: Jan 20 2019 22:28:45
+This is: main.cpp[20]: int main(int, char**)
+0xa2e140->hello::hello()
+Hello, World!
+0x7ffcf7949c28->hello::hello (Goodbye, world!)
+Goodbye, world!
+0x7ffcf7949c20->hello::hello (const hello&)
+Hello, World!
+for: foo
+for: bar
+for: baz
+for: qux
+for_each: foo
+for_each: bar
+for_each: baz
+for_each: qux
+0x7ffcf7949c20->hello::~hello()
+0x7ffcf7949c28->hello::~hello()
+0xa2e140->hello::~hello()

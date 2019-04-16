@@ -1,0 +1,13 @@
+border bisque 100
+define mojave polygon 0 0 0 50 10 60 50 50 40 10
+define aguave isosceles 70 90
+define yeet circle 30
+define yah circle 30
+define nope circle 30
+define oof rectangle 42 150
+draw WhiteSmoke mojave 50 300
+draw x11-purple aguave 400 400
+draw wheat nope 300 160
+draw wheat oof 320 240
+draw wheat yeet 320 320
+draw wheat yah 340 160
