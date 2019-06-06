@@ -1,0 +1,13 @@
+b(x]w
+alpha{  beta<gamma}delta>
+(([[Turing]])
+The ( quick [ brown ( fox ( jumped  ) over ) the ] lazy ) dog )
+< { }
+> html <
+ab[x]w
+alpha{  beta<gamma>delta}
+([[Turing]])
+The ( quick [ brown ( fox ( jumped  ) over ) the ] lazy ) dog 
+metamorphosis
+< html >
+( [ < { } > ] ) < < ( )  > >

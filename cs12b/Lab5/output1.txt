@@ -1,0 +1,12 @@
+Enqueue 45
+Enqueue 42
+Enqueue 21
+Queue is 45 42 21
+Dequeue 45
+Queue is 42 21
+Dequeue 42
+Queue is 21
+Dequeue 21
+Queue is empty
+Dequeue fails
+Enqueue 32

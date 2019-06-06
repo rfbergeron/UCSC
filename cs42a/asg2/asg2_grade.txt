@@ -1,0 +1,3 @@
+GRADER: Eugene
+GRADE: 20/20
+COMMENTS: Nicely done. Love the test_this_mf() function. Sorry about the buggy script, I wasn't very clear on what certain things should return :/

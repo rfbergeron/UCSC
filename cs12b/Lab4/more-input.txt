@@ -1,0 +1,10 @@
+) () (
+} [ ]
+< [] [] () <> {} >
+( abc ( def [ ghi [ jkl ( mno ) ] pqr < stu > ] vwx ) yz )
+<<><><<>>>>
+{{{}}}{{}{}}
+()[]<>{}()
+( when [ in { the < course ( of ) > } human ] events
+( abcdefg ) hijk
+ i { think ( therefore ) < i > am ) }

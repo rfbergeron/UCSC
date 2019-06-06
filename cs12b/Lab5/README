@@ -1,0 +1,8 @@
+queue.c
+queueClient.c
+queue.h
+Makefile
+README
+
+Idea to use switch statements came from stackexchange, but code should be original. 
+Error messages displayed on improper file input copied from Piazza resource.

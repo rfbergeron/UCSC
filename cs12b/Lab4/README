@@ -1,0 +1,10 @@
+balanced.c
+Makefile
+test-input.txt
+test-output.txt
+more-input.txt
+more-output.txt
+README
+
+Idea to use switch statements came from stackexchange, but code should be original. 
+Error messages displayed on improper file input copied from Piazza resource.
