@@ -1,0 +1,55 @@
+# One .gitignore to rule them all
+
+# Java ignores
+*.class
+*.log
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# C ignores
+**/a.out
+*.o
+*.a
+*.so
+*.gch
+
+# Make ignores
+*.dep
+*.d
+*.deps
+
+# Editor ignores
+*.bak
+*.swp
+*.swo
+*~
+/.metadata/
+
+# Other
+*.exe
+*.tgz
+*.tar
+*.pkg
+*.dmg
+*.img
+*.iso
+*.dll
+
+# RCS ignores
+**/RCS
+*,v
+
+# Text ignores
+*.html
+*.pdf
+*.ps
+*.mm
+*.tt
+*.qrf
+
+# cse110a specific ignores
+cse110a/utils
