@@ -51,5 +51,8 @@
 *.tt
 *.qrf
 
+# Haskell ignores
+**/.stack-work
+
 # cse110a specific ignores
 cse110a/utils
