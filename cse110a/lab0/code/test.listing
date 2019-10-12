@@ -1,0 +1,24 @@
+::::::::::::::
+test.in
+::::::::::::::
+3 4 * 1 3 / +
+10 0 /
+foo
+::::::::::::::
+test.out
+::::::::::::::
+3 4 * 1 3 / +
+
+answer: 12.3333333333333
+10 0 /
+
+answer: inf
+f
+invalid character \0146
+o
+invalid character \0157
+o
+invalid character \0157
+
+syntax error
+
