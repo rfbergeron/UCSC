@@ -22,4 +22,4 @@ oc  : ${OBJECTS}
 	${CPP} -c $< ${HEADERS}
 
 clean :
-	rm main.o
+	rm -f main.o auxlib.o auxlib.h.gch oc

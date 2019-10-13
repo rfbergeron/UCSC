@@ -77,4 +77,9 @@ void debug::where (char flag, const char* file, int line,
         << "   " << pretty_function << endl;
 }
 
+void debug::where_short (char flag, const char* file, int line) {
+   cout << exec::execname << ": DEBUG(" << flag << ") "
+        << file << "[" << line << "] ";
+}
+
 

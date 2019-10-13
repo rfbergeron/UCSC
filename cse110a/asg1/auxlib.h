@@ -34,7 +34,6 @@ ostream& error();
 void eprint_status (const char* command, int status);
 // Print the status returned by wait(2) from a subprocess.
 
-
 // debug -
 //    static class for maintaining global debug flags.
 // setflags -
@@ -53,6 +52,7 @@ class debug {
       static bool getflag (char flag);
       static void where (char flag, const char* file, int line,
                          const char* pretty_function);
+      static void where_short (char flag, const char* file, int line);
 };
 
 // DEBUGF -
@@ -71,7 +71,7 @@ class debug {
 #ifdef NDEBUG
 #define DEBUGF(FLAG,CODE) ;
 #define DEBUGS(FLAG,STMT) ;
-#define DEBUGT(FLAG,CODE) ;
+#define DEBUGH(FLAG,CODE) ;
 #else
 #define DEBUGF(FLAG,CODE) { \
            if (debug::getflag (FLAG)) { \
@@ -87,10 +87,9 @@ class debug {
               STMT; \
            } \
         }
-#define DEBUGT(FLAG,CODE) { \
+#define DEBUGH(FLAG,CODE) { \
            if (debug::getflag (FLAG)) { \
-              debug::where (FLAG, __FILE__, __LINE__, \
-                                 ""); \
+              debug::where_short(FLAG, __FILE__, __LINE__); \
               cerr << CODE << endl; \
            } \
         }
