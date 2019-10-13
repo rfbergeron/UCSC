@@ -29,13 +29,13 @@ void string_set::dump (ostream& out) {
       for (auto itor = set.cbegin (bucket);
            itor != set.cend (bucket); ++itor) {
          if (need_index) {
-            out << "string_set[" << setw(4) << bucket << ": ";
+            out << "string_set[" << setw(4) << bucket << "]: ";
          }else {
-            out << "           " << setw(6) << "";
+            out << "           " << setw(7) << "";
          }
          need_index = false;
          const string* str = &*itor;
-         out << setw(20) << hash_fn(*str) << str << "->\""
+         out << setw(20) << hash_fn(*str) << " " << str << "->\""
              << *str << "\"" << endl;
       }
    }

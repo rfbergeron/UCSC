@@ -74,12 +74,12 @@ void debug::where (char flag, const char* file, int line,
                         const char* pretty_function) {
    cout << exec::execname << ": DEBUG(" << flag << ") "
         << file << "[" << line << "] " << endl
-        << "   " << pretty_function << endl;
+        << pretty_function << endl;
 }
 
 void debug::where_short (char flag, const char* file, int line) {
    cout << exec::execname << ": DEBUG(" << flag << ") "
-        << file << "[" << line << "] ";
+        << file << "[" << line << "] " << endl;
 }
 
 

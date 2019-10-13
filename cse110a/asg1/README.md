@@ -1,0 +1,13 @@
+#`oc` String Set and Preprocessor
+###Robert Bergeron
+###ID: `rbergero`
+
+This program makes use of examples and utility files found in the util-code
+directory, namely:
+
+- auxlib.cpp
+- auxlib.h
+- string_set.cpp
+- string_set.h
+
+The main.cpp file also contains code from cppstrtok.cpp
