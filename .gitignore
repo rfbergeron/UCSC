@@ -53,6 +53,10 @@
 
 # Haskell ignores
 **/.stack-work
+**/stack.yaml.lock
 
-# cse110a specific ignores
+# cse110a specific
 cse110a/utils
+
+# cs112 ignores
+cs112/hw2-rbergero/img

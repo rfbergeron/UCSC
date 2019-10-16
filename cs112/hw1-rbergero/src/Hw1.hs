@@ -48,7 +48,7 @@ digitsOfInt :: Int -> [Int]
 digitsOfInt n
    | n < 0     = []
    | n < 10    = [n]
-   | otherwise = digitsOfInt ( quot n 10) ++ [mod n 10]
+   | otherwise = digitsOfInt (quot n 10) ++ [mod n 10]
 
 
 -- | `digits n` retruns the list of digits of `n`

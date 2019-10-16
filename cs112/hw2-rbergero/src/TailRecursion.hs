@@ -64,7 +64,7 @@ removeDuplicates l = reverse (helper [] l)
     helper seen []     = seen
     helper seen (x:xs) = helper seen' rest'
       where
-        seen' = if elem x seen then seen else seen ++ [x]
+        seen' = if elem x seen then seen else x:seen
         rest' = xs
 
 --------------------------------------------------------------------------------
