@@ -2,8 +2,8 @@
 ###Robert Bergeron
 ###ID: `rbergero`
 
-This program makes use of examples and utility files found in the util-code
-directory, namely:
+This program makes use of examples and utility files found
+in the util-code directory, namely:
 
 - auxlib.cpp
 - auxlib.h

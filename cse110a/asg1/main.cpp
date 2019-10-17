@@ -148,7 +148,8 @@ int main(int argc, char** argv) {
 
    ofstream outfile(outfile_name.c_str());
    if((outfile.rdstate() & ofstream::failbit) != 0) {
-      cerr << "failed to open file for writing: " << outfile_name << endl;
+      cerr << "failed to open file for writing: "
+            << outfile_name << endl;
       return EXIT_FAILURE;
    }
    string command = CPP + cpp_opts + " " + infile_path;
