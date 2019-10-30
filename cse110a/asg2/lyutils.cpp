@@ -13,7 +13,7 @@ using namespace std;
 #include "lyutils.h"
 
 bool lexer::interactive = true;
-location lexer::loc = {.filenr=0, .linenr=1, .offset=0};
+location lexer::loc = {0, 1, 0};
 size_t lexer::last_yyleng = 0;
 vector<string> lexer::filenames;
 astree* parser::root = nullptr;
