@@ -56,7 +56,7 @@
 **/stack.yaml.lock
 
 # cse110a specific
-cse110a/utils
+cse110a/util-code
 
 # cs112 ignores
 cs112/hw2-rbergero/img
