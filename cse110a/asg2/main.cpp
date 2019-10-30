@@ -155,6 +155,7 @@ int main(int argc, char** argv) {
    }
    string command = CPP + cpp_opts + " " + infile_path;
    FILE* pipe = popen(command.c_str(), "r");
+   yyin = popen(command.c_str(), "r");
    if(pipe == nullptr) {
       cerr << "failed to open pipe for command: " << command << endl;
       return EXIT_FAILURE;
@@ -163,6 +164,8 @@ int main(int argc, char** argv) {
       oc_set.dump(outfile);
       int pclose_status = pclose(pipe);
       cerr_status (command.c_str(), pclose_status);
+
+      yyparse();
    }
    outfile.close();
    delete outfile_cstr;
