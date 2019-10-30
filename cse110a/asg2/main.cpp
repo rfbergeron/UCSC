@@ -4,6 +4,7 @@
 #include <cstring>
 #include <iomanip>
 #include <fstream>
+#include <vector>
 
 #include <libgen.h>
 #include <unistd.h>
@@ -16,6 +17,8 @@
 
 const string CPP = "/usr/bin/cpp";
 const string OC_EXT = ".oc";
+const string STR_EXT = ".str";
+const string TOK_EXT = ".tok";
 constexpr size_t LINESIZE = 1024;
 string cpp_opts = " -nostdinc";
 
@@ -125,6 +128,15 @@ void scan_options(int argc, char** argv) {
    }
 }
 
+void dump_astrees(vector<astree*> trees, ostream& out) {
+    for(const auto& tree : trees) {
+       out << tree->loc.filenr << " " << tree->loc.linenr
+           << "." << tree->loc.offset << " " << tree->symbol
+           << " " << parser::get_tname(tree->symbol) << *(tree->lexinfo)
+           << endl;
+    }
+}
+
 int main(int argc, char** argv) {
    scan_options(argc, argv);
    ios_base::sync_with_stdio(true);
@@ -133,41 +145,54 @@ int main(int argc, char** argv) {
    DEBUGH('a', "     oc program infile_path: " << argv[optind]);
    DEBUGH('a', "     CPP exec: " << CPP << cpp_opts);
 
-   string infile_path = argv[optind];
-   size_t ext_index = infile_path.length() - OC_EXT.length();
-   if(infile_path.compare(ext_index,
-            infile_path.length() - ext_index, OC_EXT) != 0) {
-      cerr << "not an .oc file: " << infile_path << endl;
+   string oc_name { basename(argv[optind]) };
+   size_t ext_index = oc_name.rfind(OC_EXT);
+   if(ext_index == string::npos ||
+         !OC_EXT.compare(oc_name.substr(ext_index))) {
+      cerr << "not an .oc file: " << oc_name << endl;
       return EXIT_FAILURE;
    }
-   char * outfile_cstr = new char[ext_index+1];
-   infile_path.copy(outfile_cstr, ext_index);
-   outfile_cstr[ext_index] = 0;
-   string outfile_name(basename(outfile_cstr));
-   outfile_name = outfile_name.append(".str");
-   DEBUGH('a', "     output file name: " << outfile_name);
 
-   ofstream outfile(outfile_name.c_str());
-   if((outfile.rdstate() & ofstream::failbit) != 0) {
+   string base_name = oc_name.substr(ext_index);
+   string str_name = base_name.append(STR_EXT);
+   string tok_name = base_name.append(TOK_EXT);
+   DEBUGH('a', "     output names: " << str_name << " " << tok_name);
+
+   ofstream strfile(str_name.c_str());
+   if((strfile.rdstate() & ofstream::failbit) != 0) {
       cerr << "failed to open file for writing: "
-            << outfile_name << endl;
+            << str_name << endl;
       return EXIT_FAILURE;
    }
-   string command = CPP + cpp_opts + " " + infile_path;
+
+   ofstream tokfile(tok_name.c_str());
+   if((tokfile.rdstate() & ofstream::failbit) != 0) {
+      cerr << "failed to open file for writing: "
+            << tok_name << endl;
+      return EXIT_FAILURE;
+   }
+
+   string command = CPP + cpp_opts + " " + oc_name;
    FILE* pipe = popen(command.c_str(), "r");
    yyin = popen(command.c_str(), "r");
-   if(pipe == nullptr) {
+   if(pipe == nullptr || yyin == nullptr ) {
       cerr << "failed to open pipe for command: " << command << endl;
       return EXIT_FAILURE;
    } else {
-      string_set oc_set = cpplines(pipe, infile_path);
-      oc_set.dump(outfile);
+      string_set oc_set = cpplines(pipe, oc_name);
+      oc_set.dump(strfile);
       int pclose_status = pclose(pipe);
       cerr_status (command.c_str(), pclose_status);
 
-      yyparse();
+      vector<astree*> tokens;
+      while(yylex() != YYEOF) {
+         tokens.push_back(yylval);
+      }
+      dump_astrees(tokens, tokfile);
+      pclose_status = pclose(yyin);
+      cerr_status (command.c_str(), pclose_status);
+      strfile.close();
+      tokfile.close();
+      return EXIT_SUCCESS;
    }
-   outfile.close();
-   delete outfile_cstr;
-   return EXIT_SUCCESS;
 }
