@@ -130,14 +130,18 @@ void scan_options(int argc, char** argv) {
 
 void dump_astrees(vector<astree*> trees, ostream& out) {
     for(const auto& tree : trees) {
-       out << tree->loc.filenr << " " << tree->loc.linenr
-           << "." << tree->loc.offset << " " << tree->symbol
-           << " " << parser::get_tname(tree->symbol) << *(tree->lexinfo)
-           << endl;
+       out << setw(2) << tree->loc.filenr << "  " << setw(3)
+           << tree->loc.linenr << "." << setw(3) << setfill('0')
+           << tree->loc.offset << " " << setw(3) << setfill(' ')
+           << tree->symbol << " " << setw(13) << left
+           << parser::get_tname(tree->symbol) << right << " "
+           << *(tree->lexinfo) << endl;
     }
 }
 
 int main(int argc, char** argv) {
+   yydebug = 0;
+   yy_flex_debug = 0;
    scan_options(argc, argv);
    ios_base::sync_with_stdio(true);
    // calls to getopt increment optind, so after scan_options returns
@@ -148,14 +152,15 @@ int main(int argc, char** argv) {
    string oc_name { basename(argv[optind]) };
    size_t ext_index = oc_name.rfind(OC_EXT);
    if(ext_index == string::npos ||
-         !OC_EXT.compare(oc_name.substr(ext_index))) {
-      cerr << "not an .oc file: " << oc_name << endl;
+         OC_EXT.compare(oc_name.substr(ext_index))) {
+      cerr << "not an .oc file: " << oc_name << " " <<
+         oc_name.substr(ext_index) << endl;
       return EXIT_FAILURE;
    }
 
-   string base_name = oc_name.substr(ext_index);
-   string str_name = base_name.append(STR_EXT);
-   string tok_name = base_name.append(TOK_EXT);
+   string base_name = oc_name.substr(0, ext_index);
+   string str_name = base_name + STR_EXT;
+   string tok_name = base_name + TOK_EXT;
    DEBUGH('a', "     output names: " << str_name << " " << tok_name);
 
    ofstream strfile(str_name.c_str());
@@ -179,15 +184,21 @@ int main(int argc, char** argv) {
       cerr << "failed to open pipe for command: " << command << endl;
       return EXIT_FAILURE;
    } else {
+      DEBUGH('s', "  creating oc set");
       string_set oc_set = cpplines(pipe, oc_name);
+      DEBUGH('s', "  dumping oc set");
       oc_set.dump(strfile);
       int pclose_status = pclose(pipe);
       cerr_status (command.c_str(), pclose_status);
 
       vector<astree*> tokens;
-      while(yylex() != YYEOF) {
+      int currtok = 0;
+      DEBUGH('t', "  running scanner");
+      while(yylex()) {
+         DEBUGH('v', "  Token #: " << *(yylval->lexinfo));
          tokens.push_back(yylval);
       }
+      DEBUGH('t', "  dumping scanner");
       dump_astrees(tokens, tokfile);
       pclose_status = pclose(yyin);
       cerr_status (command.c_str(), pclose_status);

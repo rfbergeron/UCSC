@@ -60,7 +60,7 @@ void lexer::include() {
    int scan_rc = sscanf (yytext, "# %zu \"%[^\"]\"",
                          &linenr, filename.get());
    if (scan_rc != 2) {
-      error() << "invalid directive, ignored: " << yytext << endl;
+      ::error() << "invalid directive, ignored: " << yytext << endl;
    }else {
       if (yy_flex_debug) {
          cerr << "--included # " << linenr << " \"" << filename.get()
@@ -88,7 +88,7 @@ void lexer::fatal_error (const char* msg) {
 
 ostream& lexer::error() {
    assert (not lexer::filenames.empty());
-   return error() << lexer::filename (loc.filenr) << ":"
+   return ::error() << lexer::filename (loc.filenr) << ":"
           << loc.linenr << "." << loc.offset << ": ";
 }
 
