@@ -3,6 +3,7 @@
 %{
 
 #include "lyutils.h"
+#include "yyparse.h"
 
 #define YY_USER_ACTION  { lexer::advance(); }
 #define YY_FATAL_ERROR(msg) { lexer::fatal_error (msg); }
@@ -32,8 +33,8 @@ DECCON          ([1-9]{DIGIT}*)
 OCTCON          (0{OCTDIGIT}*)
 HEXCON          (0[xX]{HEXDIGIT}+)
 INTCON          ({DECCON}|{OCTCON}|{HEXCON})
-CHARCON         (’([^\\’\n]|\\[\\’"0nt])’)
-STRINGCON       (\"([^\\"\n]|\\[\\’"0nt])*\")
+CHARCON         ('([^\\'\n]|\\[\\'"0nt])')
+STRINGCON       (\"([^\\"\n]|\\[\\'"0nt])*\")
 %%
 
 "#".*\n         { lexer::include(); lexer::newline(); }

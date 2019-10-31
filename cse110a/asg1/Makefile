@@ -29,6 +29,8 @@ ${EXECNAME} : ${OBJECTS}
 %.o : %.cpp
 	${CPP} -c $< ${HEADERS}
 
+rmtest: 
+	rm -f *.oc *.err *.str *.out
 clean :
 	rm -f ${OBJECTS} ${GCH} ${DEPFILE}
 

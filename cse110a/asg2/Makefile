@@ -44,6 +44,9 @@ yylex.cpp : scanner.l
 yyparse.cpp yyparse.h : parser.y
 	bison --defines=yyparse.h --output=yyparse.cpp parser.y
 
+rmtest :
+	rm -f *.oc *.str *.err *.out *.tok
+
 clean :
 	rm -f ${OBJECTS} ${GCH} ${DEPFILE}
 
