@@ -53,7 +53,7 @@ rmtest :
 
 clean :
 	rm -f ${OBJECTS} ${GCH} ${DEPFILE} ${GENS} ${HEADERGENS} \
-		yyparse.output
+      yyparse.output
 
 submit:
 	submit ${CLASS} ${ASG} README ${MKFILE} ${CPPSRC} \
