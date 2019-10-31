@@ -49,19 +49,20 @@ yyparse.h yyparse.cpp : parser.y
 	bison --defines=yyparse.h --output=yyparse.cpp parser.y
 
 rmtest :
-	rm -f *.oc *.str *.err *.out *.tok
+	rm -f *.oc *.str *.err *.out *.tok *.log *.lexyacctrace
 
 clean :
-	rm -f ${OBJECTS} ${GCH} ${DEPFILE} ${GENS} ${HEADERGENS}
+	rm -f ${OBJECTS} ${GCH} ${DEPFILE} ${GENS} ${HEADERGENS} \
+		yyparse.output
 
 submit:
 	submit ${CLASS} ${ASG} README ${MKFILE} ${CPPSRC} \
-		${HEADERS} scanner.l parser.y
+      ${HEADERS} scanner.l parser.y
 
 ci :
 	git add ${HEADERS} ${CPPSRC} ${MKFILE} scanner.l parser.y README
 
-spotless : clean
+spotless : clean rmtest
 	rm -f ${EXECNAME}
 
 deps : ${CPPSRC} ${GENS}

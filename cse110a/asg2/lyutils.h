@@ -30,9 +30,11 @@ class lexer {
       static location loc;
       static size_t last_yyleng;
       static vector<string> filenames;
+      static vector<int> include_linenrs;
    public:
       static bool interactive;
       static const string* filename (int filenr);
+      static int include_linenr (int filenr);
       static void newfilename (const string& filename);
       static void advance();
       static void newline();

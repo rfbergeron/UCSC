@@ -129,13 +129,19 @@ void scan_options(int argc, char** argv) {
 }
 
 void dump_astrees(vector<astree*> trees, ostream& out) {
-    for(const auto& tree : trees) {
-       out << setw(2) << tree->loc.filenr << "  " << setw(3)
-           << tree->loc.linenr << "." << setw(3) << setfill('0')
-           << tree->loc.offset << " " << setw(3) << setfill(' ')
-           << tree->symbol << " " << setw(13) << left
-           << parser::get_tname(tree->symbol) << right << " "
-           << *(tree->lexinfo) << endl;
+   size_t current_filenr = 0;
+   for(const auto& tree : trees) {
+      while(tree->loc.filenr >= current_filenr) {
+         out << "# " << setw(2) << lexer::include_linenr(current_filenr)
+               << " " << *lexer::filename(current_filenr) << endl;
+         ++current_filenr;
+      }
+      out << "  " << setw(2) << tree->loc.filenr << "  " << setw(3)
+            << tree->loc.linenr << "." << setw(3) << setfill('0')
+            << tree->loc.offset << " " << setw(3) << setfill(' ')
+            << tree->symbol << " " << setw(13) << left
+            << parser::get_tname(tree->symbol) << right << " "
+            << *(tree->lexinfo) << endl;
     }
 }
 
@@ -198,6 +204,7 @@ int main(int argc, char** argv) {
          DEBUGH('v', "  Token #: " << *(yylval->lexinfo));
          tokens.push_back(yylval);
       }
+
       DEBUGH('t', "  dumping scanner");
       dump_astrees(tokens, tokfile);
       pclose_status = pclose(yyin);
