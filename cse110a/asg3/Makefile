@@ -46,7 +46,7 @@ yylex.cpp : scanner.l
 	flex --outfile=yylex.cpp scanner.l
 
 yyparse.h yyparse.cpp : parser.y
-	bison --defines=yyparse.h --output=yyparse.cpp parser.y
+	bison -Wall -Wno-other --defines=yyparse.h --output=yyparse.cpp parser.y
 
 rmtest :
 	rm -f *.oc *.str *.err *.out *.tok *.log *.lexyacctrace
