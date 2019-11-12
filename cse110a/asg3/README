@@ -1,6 +1,6 @@
-#`oc` Scanner
-###Robert Bergeron
-###ID: `rbergero`
+# `oc` Scanner
+### Robert Bergeron
+### ID: `rbergero`
 
 This program makes use of examples and utility files found
 in the util-code directory, namely:
@@ -15,3 +15,6 @@ in the util-code directory, namely:
 - astree.h
 
 The main.cpp file also contains code from cppstrtok.cpp
+
+.tok files are now generated correctly according to the spec from last
+assignment, i.e. files are written from calls made within yylex

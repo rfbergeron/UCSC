@@ -18,6 +18,7 @@ size_t lexer::last_yyleng = 0;
 vector<string> lexer::filenames;
 vector<size_t> lexer::include_linenrs;
 astree* parser::root = nullptr;
+extern ofstream tokfile;
 
 size_t lexer::get_filenr() {
    return lexer::loc.filenr;
@@ -71,11 +72,13 @@ void lexer::include() {
                          &linenr, filename.get());
    if (scan_rc != 2) {
       ::error() << "invalid directive, ignored: " << yytext << endl;
-   }else {
+   } else {
       if (yy_flex_debug) {
          cerr << "--included # " << linenr << " \"" << filename.get()
               << "\"" << endl;
       }
+      tokfile << "# " << setw(2) << linenr << " "
+              << filename.get() << endl;
       lexer::loc.linenr = linenr - 1;
       lexer::newfilename (filename.get());
    }
@@ -83,6 +86,12 @@ void lexer::include() {
 
 int lexer::token (int symbol) {
    yylval = new astree (symbol, lexer::loc, yytext);
+   tokfile << "  " << setw(2) << yylval->loc.filenr << "  " << setw(3)
+           << yylval->loc.linenr << "." << setw(3) << setfill('0') 
+           << yylval->loc.offset << " " << setw(3) << setfill(' ')
+           << yylval->symbol << " " << setw(13) << left 
+           << parser::get_tname(yylval->symbol) << right << " "
+           << *(yylval->lexinfo) << endl;
    return symbol;
 }
 

@@ -22,6 +22,9 @@ const string TOK_EXT = ".tok";
 const string AST_EXT = ".ast";
 constexpr size_t LINESIZE = 1024;
 string cpp_opts = " -nostdinc";
+ofstream strfile;
+ofstream tokfile;
+ofstream astfile;
 
 // Chomp the last character from a buffer if it is delim.
 void chomp (char* string, char delim) {
@@ -171,21 +174,21 @@ int main(int argc, char** argv) {
    string ast_name = base_name + AST_EXT;
    DEBUGH('a', "     output names: " << str_name << " " << tok_name);
 
-   ofstream strfile(str_name.c_str());
+   strfile.open(str_name.c_str());
    if((strfile.rdstate() & ofstream::failbit) != 0) {
       cerr << "failed to open file for writing: "
             << str_name << endl;
       return EXIT_FAILURE;
    }
 
-   ofstream tokfile(tok_name.c_str());
+   tokfile.open(tok_name.c_str());
    if((tokfile.rdstate() & ofstream::failbit) != 0) {
       cerr << "failed to open file for writing: "
             << tok_name << endl;
       return EXIT_FAILURE;
    }
 
-   ofstream astfile(ast_name.c_str());
+   astfile.open(ast_name.c_str());
    if((astfile.rdstate() & ofstream::failbit) != 0) {
       cerr << "failed to open file for writing: "
             << ast_name << endl;
@@ -224,10 +227,14 @@ int main(int argc, char** argv) {
          DEBUGH('y', "  bison parse was successful");
          astree::print(astfile, parser::root, 0); 
       }
+      else {
+        cerr << "Parsing failed with status " << parse_status << endl;  
+      }
       pclose_status = pclose(yyin);
       cerr_status (command.c_str(), pclose_status);
       strfile.close();
       tokfile.close();
+      astfile.close();
       return EXIT_SUCCESS;
    }
 }

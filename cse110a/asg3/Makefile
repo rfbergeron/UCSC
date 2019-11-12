@@ -1,7 +1,7 @@
 # Makefile, Author: Robert Bergeron, ID: rbergero
 
 CLASS = cse110a-wm.f19
-ASG = asg2
+ASG = asg3
 # Extremely picky compiler options
 WARN = -Wall -Wextra -Werror -Wpedantic -Wshadow -Wold-style-cast
 # full gcc exec command
@@ -46,10 +46,11 @@ yylex.cpp : scanner.l
 	flex --outfile=yylex.cpp scanner.l
 
 yyparse.h yyparse.cpp : parser.y
-	bison -Wall -Wno-other --defines=yyparse.h --output=yyparse.cpp parser.y
+	bison -Wall -Wno-other -v --defines=yyparse.h \
+      --output=yyparse.cpp parser.y
 
 rmtest :
-	rm -f *.oc *.str *.err *.out *.tok *.log *.lexyacctrace
+	rm -f *.oc *.str *.err *.out *.tok *.log *.ast *.lexyacctrace
 
 clean :
 	rm -f ${OBJECTS} ${GCH} ${DEPFILE} ${GENS} ${HEADERGENS} \

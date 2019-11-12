@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 using namespace std;
 
 #include "astree.h"
@@ -19,6 +20,7 @@ extern char* yytext;
 extern int yy_flex_debug;
 extern int yydebug;
 extern int yyleng; 
+extern ofstream tokfile;
 
 int yylex();
 int yylex_destroy();
