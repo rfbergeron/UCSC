@@ -16,14 +16,18 @@ bool lexer::interactive = true;
 location lexer::loc = {0, 1, 0};
 size_t lexer::last_yyleng = 0;
 vector<string> lexer::filenames;
-vector<int> lexer::include_linenrs;
+vector<size_t> lexer::include_linenrs;
 astree* parser::root = nullptr;
+
+size_t lexer::get_filenr() {
+   return lexer::loc.filenr;
+}
 
 const string* lexer::filename (int filenr) {
    return &lexer::filenames.at(filenr);
 }
 
-int lexer::include_linenr (int filenr) {
+size_t lexer::include_linenr (int filenr) {
    return lexer::include_linenrs.at(filenr);
 }
 

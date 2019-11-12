@@ -17,13 +17,15 @@ ostream& operator<< (ostream& out, const location& loc) {
 }
 
 ostream& operator<< (ostream& out, const astree* tree) {
-   return out << parser::get_tname (tree->symbol)
-              << " \"" << *tree->lexinfo << "\" " << tree->loc;
+   const char* tname = parser::get_tname (tree->symbol);
+   tname += 4;
+   return out << tname << " \"" << *tree->lexinfo << "\" " << tree->loc;
 }
 
 astree::astree (int symbol_, const location& loc_, const char* info):
                 symbol (symbol_), loc (loc_),
-                lexinfo (string_set::intern (info)), firstborn(this) {
+                lexinfo (string_set::intern (info)), firstborn(this),
+                next_sibling(nullptr) {
 }
 
 astree::~astree() {
@@ -41,19 +43,25 @@ astree::~astree() {
 
 astree* astree::adopt (astree* child1, astree* child2, astree* child3) {
    if (child1 != nullptr) { 
-      children.push_back (child1); 
-      if(child1->next_sibling != nullptr)
-         children.push_back(child1->next_sibling);
+      astree* current_sibling = child1->firstborn;
+      do {
+         children.push_back(current_sibling);
+         current_sibling = current_sibling->next_sibling;
+      } while(current_sibling != nullptr);
    }
    if (child2 != nullptr) {
-      children.push_back (child2); 
-      if(child2->next_sibling != nullptr)
-         children.push_back(child2->next_sibling);
+      astree* current_sibling = child2->firstborn;
+      do {
+         children.push_back(current_sibling);
+         current_sibling = current_sibling->next_sibling;
+      } while(current_sibling != nullptr);
    }
    if (child3 != nullptr) {
-      children.push_back (child3); 
-      if(child3->next_sibling != nullptr)
-         children.push_back(child3->next_sibling);
+      astree* current_sibling = child3->firstborn;
+      do {
+         children.push_back(current_sibling);
+         current_sibling = current_sibling->next_sibling;
+      } while(current_sibling != nullptr);
    }
    return this;
 }
@@ -68,6 +76,10 @@ astree* astree::buddy_up (astree* sibling) {
    sibling->firstborn = firstborn;
    next_sibling = sibling;
    // want to append to the end of the "list"
+   DEBUGH('y', "  buddying up " << parser::get_tname(symbol)
+         << " with " << parser::get_tname(sibling->symbol)
+         << "; oldest sib: " << parser::get_tname(firstborn->symbol)
+         << " " << *(firstborn->lexinfo));
    return sibling;
 }
 
@@ -91,14 +103,17 @@ void astree::dump (ostream& out, astree* tree) {
 }
 
 void astree::print (ostream& out, astree* tree, int depth) {
-   out << "; AST: " << setw (depth * 3) << ""
-       << tree << endl;
+   for(int i = 0; i < depth; ++i) {
+      out << "|  ";
+   }
+   out << tree << endl;
    for (astree* child: tree->children) {
       astree::print (out, child, depth + 1);
    }
 }
 
 void destroy (astree* tree1, astree* tree2, astree* tree3) {
+   DEBUGH('y', "  DESTROYING");
    if (tree1 != nullptr) delete tree1;
    if (tree2 != nullptr) delete tree2;
    if (tree3 != nullptr) delete tree3;

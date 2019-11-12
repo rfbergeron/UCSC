@@ -30,11 +30,12 @@ class lexer {
       static location loc;
       static size_t last_yyleng;
       static vector<string> filenames;
-      static vector<int> include_linenrs;
+      static vector<size_t> include_linenrs;
    public:
       static bool interactive;
+      static size_t get_filenr();
       static const string* filename (int filenr);
-      static int include_linenr (int filenr);
+      static size_t include_linenr (int filenr);
       static void newfilename (const string& filename);
       static void advance();
       static void newline();
@@ -49,6 +50,7 @@ class lexer {
 
 struct parser {
    static astree* root;
+   static astree* newroot();
    static const char* get_tname (int symbol);
    static astree* make_function (astree* type, astree* id,
          astree* paren, astree* params, astree* block);

@@ -18,10 +18,6 @@
 %destructor { destroy ($$); } <>
 %printer { assert (yyoutput == stderr); astree::dump (cerr, $$); } <>
 
-%initial-action {
-   parser::root = new astree (TOK_ROOT, {0, 0, 0}, "<<ROOT>>");
-}
-
 %token TOK_VOID TOK_INT TOK_STRING TOK_TYPE_ID
 %token TOK_IF TOK_ELSE TOK_WHILE TOK_RETURN TOK_STRUCT
 %token TOK_NULLPTR TOK_ARRAY TOK_ARROW TOK_ALLOC TOK_PTR
@@ -36,26 +32,29 @@
 %left  TOK_EQ TOK_NE TOK_LT TOK_LE TOK_GT TOK_GE
 %left  '+' '-'
 %left  '*' '/' '%'
-%precedence TOK_POS TOK_NEG
+%precedence TOK_POS TOK_NEG TOK_NOT
 %precedence TOK_ARROW '['
 
-%start program
 
 %%
 
+start       : program                                                      { $$ = $1 = nullptr; }
+            ;
 program     : program structdef                                            { $$ = $1->adopt($2); }
             | program function                                             { $$ = $1->adopt($2); }
             | program statement                                            { $$ = $1->adopt($2); }
             | program error '}'                                            { $$ = $1; }
             | program error ';'                                            { $$ = $1; }
-            | %empty                                                       { $$ = parser::root; }
+            | %empty                                                       { $$ = parser::newroot(); }
             ;
 structdef   : TOK_STRUCT TOK_IDENT '{' structbody '}' ';'                  { $$ = $1->adopt($2, $4); } 
+            | TOK_STRUCT TOK_IDENT '{' '}' ';'                             { $$ = $1->adopt($2); }
             ;
 structbody  : type TOK_IDENT ';'                                           { $$ = $1->adopt($2); }
             | structbody type TOK_IDENT ';'                                { $$ = $1->buddy_up($2->adopt($3)); }
             ;
 function    : type TOK_IDENT '(' parameters ')' block                      { $$ = parser::make_function($1, $2, $3, $4, $6); }
+            | type TOK_IDENT '(' ')' block                                 { $$ = parser::make_function($1, $2, $3, nullptr, $5); }
             ;
 parameters  : type TOK_IDENT                                               { $$ = $1->adopt($2); }
             | parameters ',' type TOK_IDENT                                { $$ = $1->buddy_up($3->adopt($4)); }
@@ -66,11 +65,14 @@ type        : plaintype                                                    { $$ 
             ;
 plaintype   : TOK_INT                                                      { $$ = $1; }
             | TOK_STRING                                                   { $$ = $1; }
-            | TOK_PTR '<' TOK_STRUCT '>' TOK_IDENT                         { $$ = $1->adopt($5); }
+            | TOK_PTR '<' TOK_STRUCT TOK_IDENT '>'                         { $$ = $1->adopt($4); }
             ;
-block       : '{' statement '}'                                            { $$ = $1->adopt_sym(TOK_BLOCK, $2);  }
-            | ';'                                                          { $$ = nullptr; }
+block       : '{' statements '}'                                           { $$ = $1->adopt_sym(TOK_BLOCK, $2);  }
+            | '{' '}'                                                      { $$ = $1->adopt_sym(TOK_BLOCK, nullptr); }
+            | ';'                                                          { $$ = $1->adopt_sym(TOK_BLOCK, nullptr); }
             ;
+statements  : statement                                                    { $$ = $1; }
+            | statements statement                                         { $$ = $1->buddy_up($2); }
 statement   : vardecl                                                      { $$ = $1; }
             | block                                                        { $$ = $1; }
             | while                                                        { $$ = $1; }
@@ -97,12 +99,13 @@ expr        : expr '+' expr                                                { $$ 
             | expr '=' expr                                                { $$ = $2->adopt($1, $3); }
             | expr TOK_EQ expr                                             { $$ = $2->adopt($1, $3); }
             | expr TOK_NE expr                                             { $$ = $2->adopt($1, $3); }
-            | expr TOK_LT expr                                             { $$ = $2->adopt($1, $3); }
+            | expr '<' expr %prec TOK_LT                                   { $$ = $2->adopt($1, $3); }
             | expr TOK_LE expr                                             { $$ = $2->adopt($1, $3); }
-            | expr TOK_GT expr                                             { $$ = $2->adopt($1, $3); }
+            | expr '>' expr %prec TOK_GT                                   { $$ = $2->adopt($1, $3); }
             | expr TOK_GE expr                                             { $$ = $2->adopt($1, $3); }
             | '+' expr %prec TOK_POS                                       { $$ = $1->adopt($2); }
             | '-' expr %prec TOK_NEG                                       { $$ = $1->adopt($2); }
+            | TOK_NOT expr                                                 { $$ = $1->adopt($2); }
             | allocator                                                    { $$ = $1; }
             | call                                                         { $$ = $1; }
             | '(' expr ')'                                                 { $$ = $2; }
@@ -130,6 +133,10 @@ constant    : TOK_INTCON                                                   { $$ 
             ;
 %%
 
+astree* parser::newroot() {
+   parser::root = new astree(TOK_ROOT, {lexer::get_filenr(), 0, 0}, "");
+   return parser::root;
+}
 const char * parser::get_tname (int symbol) {
    return yytname [YYTRANSLATE (symbol)];
 }

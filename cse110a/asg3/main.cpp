@@ -19,6 +19,7 @@ const string CPP = "/usr/bin/cpp";
 const string OC_EXT = ".oc";
 const string STR_EXT = ".str";
 const string TOK_EXT = ".tok";
+const string AST_EXT = ".ast";
 constexpr size_t LINESIZE = 1024;
 string cpp_opts = " -nostdinc";
 
@@ -167,6 +168,7 @@ int main(int argc, char** argv) {
    string base_name = oc_name.substr(0, ext_index);
    string str_name = base_name + STR_EXT;
    string tok_name = base_name + TOK_EXT;
+   string ast_name = base_name + AST_EXT;
    DEBUGH('a', "     output names: " << str_name << " " << tok_name);
 
    ofstream strfile(str_name.c_str());
@@ -180,6 +182,13 @@ int main(int argc, char** argv) {
    if((tokfile.rdstate() & ofstream::failbit) != 0) {
       cerr << "failed to open file for writing: "
             << tok_name << endl;
+      return EXIT_FAILURE;
+   }
+
+   ofstream astfile(ast_name.c_str());
+   if((astfile.rdstate() & ofstream::failbit) != 0) {
+      cerr << "failed to open file for writing: "
+            << ast_name << endl;
       return EXIT_FAILURE;
    }
 
@@ -197,7 +206,7 @@ int main(int argc, char** argv) {
       int pclose_status = pclose(pipe);
       cerr_status (command.c_str(), pclose_status);
 
-      vector<astree*> tokens;
+      /*vector<astree*> tokens;
       int currtok = 0;
       DEBUGH('t', "  running scanner");
       while(yylex()) {
@@ -206,7 +215,15 @@ int main(int argc, char** argv) {
       }
 
       DEBUGH('t', "  dumping scanner");
-      dump_astrees(tokens, tokfile);
+      dump_astrees(tokens, tokfile);*/
+      // here goes nothing
+      DEBUGH('y', "  activating bison");
+      int parse_status = yyparse();
+
+      if(parse_status == 0) {
+         DEBUGH('y', "  bison parse was successful");
+         astree::print(astfile, parser::root, 0); 
+      }
       pclose_status = pclose(yyin);
       cerr_status (command.c_str(), pclose_status);
       strfile.close();

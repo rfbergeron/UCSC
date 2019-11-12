@@ -79,7 +79,7 @@ STRINGCON       (\"([^\\"\n]|\\[\\'"0nt])*\")
 ","             { return lexer::token (','); }
 ";"             { return lexer::token (';'); }
 "<"             { return lexer::token ('<'); }
-">"             { return lexer::token ('<'); }
+">"             { return lexer::token ('>'); }
 
 {NOTNUMBER}     { return lexer::badtoken (TOK_INTCON); }
 .               { lexer::badchar (*yytext); }

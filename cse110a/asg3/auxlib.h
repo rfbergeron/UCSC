@@ -100,7 +100,7 @@ class debug {
 //
 #define STUB(CODE) { \
            debug::where (__FILE__, __LINE__, __PRETTY_FUNCTION__); \
-           cout << CODE << endl; \
+           cerr << CODE << endl; \
         }
 
 #endif
