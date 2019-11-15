@@ -68,9 +68,10 @@ function    : type TOK_IDENT
                                                 $1, $2, $3, nullptr,
                                                 $5); }
             ;
-parameters  : type TOK_IDENT                 { $$ = $1->adopt($2); }
-            | parameters ',' type TOK_IDENT  { $$ = $1->buddy_up(
-                                                $3->adopt($4)); }
+parameters  : type TOK_IDENT                 { $$ = parser::
+                                               make_type_id($1, $2); }
+            | parameters ',' type TOK_IDENT  { $$ = $1->buddy_up(parser
+                                               ::make_type_id($3, $4)); }
             ;
 type        : plaintype                      { $$ = $1; }
             | TOK_VOID                       { $$ = $1; }
