@@ -1,5 +1,3 @@
-// $Id: lyutils.h,v 1.6 2019-08-22 17:47:19-07 - - $
-
 #ifndef __UTILS_H__
 #define __UTILS_H__
 

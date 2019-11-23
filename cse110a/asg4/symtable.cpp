@@ -1,4 +1,6 @@
-#include "middleman.h"
+#include "astree.h"
+#include "lyutils.h"
+#include "symtable.h"
 
 int type_checker::make_symbol_table(astree* root) {
     int ret = 0;
@@ -15,8 +17,7 @@ int type_checker::make_symbol_table(astree* root) {
     return ret;
 }
 
-void type_checker::set_attributes(symbol* entry, const string token) {
-
+int type_checker::make_structure_entry(astree* structure) {
 }
 
 int type_checker::make_function_entry(astree* function) {
@@ -44,10 +45,6 @@ int type_checker::make_function_entry(astree* function) {
             // handle array type
         }
     }
-}
-
-int type_checker::make_structure_entry(astree* structure) {
-    const string structure_type_name = structure->children[
 }
 
 int type_checker::make_global_entry(astree* global) {

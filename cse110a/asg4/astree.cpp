@@ -6,8 +6,9 @@
 using namespace std;
 
 #include "string_set.h"
-#include "middleman.h"
-#include "yyparse.h"
+#include "lyutils.h"
+#include "astree.h"
+#include "symtable.h"
 
 const char* astree::NOINFO = "";
 

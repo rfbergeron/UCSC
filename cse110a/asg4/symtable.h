@@ -10,7 +10,8 @@
 using namespace std;
 
 #include "auxlib.h"
-#include "middleman.h"
+#include "astree.h"
+#include "lyutils.h"
 
 // circular dependency with astree; forward declare
 struct astree;
@@ -47,10 +48,14 @@ class type_checker {
         static symbol_table locals;
         static int next_block;
     public:
-        /*static int make_symbol_table(astree*);
-        static int make_function_entry(astree*);
+        static int make_symbol_table(astree*);
         static int make_structure_entry(astree*);
-        static int make_global_entry(astree*);*/
+        static int make_function_entry(astree*);
+        static int make_global_entry(astree*);
+        static int make_local_entry(astree*);
+        static int validate_block(astree*);
+        static int validate_statement(astree*, const string*);
+        static int validate_expression(astree*);
         static void dump_symbol_table();
 };
 #endif

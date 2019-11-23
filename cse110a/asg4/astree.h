@@ -1,5 +1,3 @@
-// $Id: astree.h,v 1.5 2019-08-22 17:23:59-07 - - $
-
 #ifndef __ASTREE_H__
 #define __ASTREE_H__
 

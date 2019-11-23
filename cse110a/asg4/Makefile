@@ -17,10 +17,10 @@ EXECNAME = oc
 # .cpp source files
 CPPSRC = main.cpp auxlib.cpp string_set.cpp astree.cpp lyutils.cpp symtable.cpp
 # .h header files
-HEADERS = auxlib.h string_set.h astree.h lyutils.h symtable.h middleman.h
+HEADERS = auxlib.h string_set.h astree.h lyutils.h symtable.h
 # .gch header somethings?
 GCH = auxlib.h.gch string_set.h.gch lyutils.h.gch astree.h.gch \
-      yyparse.h.gch symtable.h.gch middleman.h.gch
+      yyparse.h.gch symtable.h.gch
 # .o object files
 OBJECTS = main.o auxlib.o string_set.o yylex.o yyparse.o \
       lyutils.o astree.o
