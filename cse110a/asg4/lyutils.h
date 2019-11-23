@@ -11,7 +11,7 @@
 using namespace std;
 
 #include "auxlib.h"
-#include "middleman.h"
+#include "astree.h"
 
 #define YYEOF 0
 
@@ -62,6 +62,8 @@ struct parser {
          astree* paren, astree* params, astree* block);
    static astree* make_type_id (astree* type, astree* id,
          astree* expr = nullptr);
+   static astree* make_struct_ref (astree* parent,
+         astree* structure_id);
 };
 
 #define YYSTYPE_IS_DECLARED

@@ -10,7 +10,7 @@
 using namespace std;
 
 #include "auxlib.h"
-#include "lyutils.h"
+#include "middleman.h"
 
 bool lexer::interactive = true;
 location lexer::loc = {0, 1, 0};

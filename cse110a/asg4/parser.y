@@ -4,6 +4,7 @@
 
 #include "lyutils.h"
 #include "astree.h"
+#include "symtable.h"
 
 %}
 
@@ -80,7 +81,9 @@ type        : plaintype                      { $$ = $1; }
 plaintype   : TOK_INT                        { $$ = $1; }
             | TOK_STRING                     { $$ = $1; }
             | TOK_PTR '<'
-              TOK_STRUCT TOK_IDENT '>'       { $$ = $1->adopt($4); }
+              TOK_STRUCT TOK_IDENT '>'       { $$ = parser::
+                                               make_struct_ref($1, $4);
+                                               }
             ;
 block       : '{' statements '}'             { $$ = $1->adopt_sym(
                                                TOK_BLOCK, $2);  }
@@ -145,13 +148,17 @@ exprs       : expr                           { $$ = $1; }
             | exprs ',' expr                 { $$ = $1->buddy_up($3); }
             ;
 allocator   : TOK_ALLOC '<' TOK_STRING
-              '>' '(' expr ')'               { $$ = $1->adopt($3,
-                                               $6); }
+              '>' '(' expr ')'               { $$ = $1->
+                                               adopt_attributes($3)->
+                                               adopt($6); }
             | TOK_ALLOC '<' TOK_STRUCT
-              TOK_IDENT '>' '(' ')'          { $$ = $1->adopt($4); }
+              TOK_IDENT '>' '(' ')'          { $$ = parser::
+                                               make_struct_ref($1, $4);
+                                               }
             | TOK_ALLOC '<' TOK_ARRAY '<'
-              plaintype '>' '>' '(' expr ')' { $$ = $1->adopt(
-                                               $3->adopt($5), $9); }
+              plaintype '>' '>' '(' expr ')' { $$ = $1->adopt_attributes
+                                               ($3->adopt($5))
+                                               ->adopt($9); }
             ;
 call        : TOK_IDENT '(' exprs ')'        { $$ = $2->adopt_sym(
                                                TOK_CALL, $1, $3); }
@@ -172,6 +179,8 @@ constant    : TOK_INTCON                     { $$ = $1; }
             ;
 %%
 
+// functions, structures, typeids, allocs can have their type
+// assigned when they adopt their children
 
 astree* parser::newroot() {
    parser::root = new astree(TOK_ROOT, {lexer::get_filenr(), 0, 0}, "");
@@ -193,6 +202,11 @@ astree* parser::make_function(astree* type, astree* id, astree* paren,
 astree* parser::make_type_id(astree* type, astree* id, astree* expr) {
    astree* type_id = new astree(TOK_TYPE_ID, type->loc, astree::NOINFO);
    return type_id->adopt_attributes(type)->adopt(id, expr);
+}
+
+astree* parser::make_struct_ref(astree* parent, astree* structure_id) {
+    structure_id->attributes.set((size_t)attr::TYPEID);
+    return parent->adopt(structure_id);
 }
 
 bool is_defined_token (int symbol) {

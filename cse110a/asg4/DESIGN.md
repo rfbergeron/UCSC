@@ -84,26 +84,27 @@ constructed and when they adopt their child nodes:
 
 TYPEID only gets assigned to nodes which are references to structure
 definitions? Like when a ptr<struct X> is declared (the only way a struct
-can be instantiated), the node containing X will have the TYPEID attribute
+can be instantiated), the node containing X will have the TYPEID attribute.
+Also used when a structure is allocated.
 
+- TOK_STRUCT: STRUCT, used only in declaration so nothing to inherit.
+  Also not an LVAL since it is used for declaration.
+- TOK_INDEX: VADDR, LVAL, other attributes come from an expression and
+  as such cannot be resolved until we do type checking
 - TOK_VOID: VOID
 - TOK_INT: INT
 - TOK_STRING: STRING
-- TOK_FUNCTION: FUNCTION, inherits attributes of its return type
 - TOK_NULLPTR: CONST, NULLPTR_T
-- TOK_STRUCT: STRUCT, used only in declaration so nothing to inherit.
-  Also not an LVAL since it is used for declaration.
 - TOK_PTR: STRUCT
-- TOK_ARRAY: ARRAY, inherits attributes of its type
 - TOK_INTCON: CONST, INT
 - TOK_CHARCON: CONST, INT
 - TOK_STRINGCON: CONST, STRING
-- TOK_INDEX: VADDR, LVAL, plus the attributes of the array/string it is
-  sourced from, minus the ARRAY/STRING attribute
 - TOK_ARROW: VADDR, LVAL
+- TOK_ARRAY: ARRAY, inherits attributes of its type
+- TOK_FUNCTION: FUNCTION, inherits attributes of its return type
 - TOK_TYPE_ID: inherits attributes of its type
-- TOK_ALLOC: VREG, plus the attributes of whatever is being allocated
-  (TOK_STRING, TOK_ARRAY, or a structure)
+- TOK_ALLOC: VREG, attributes of the type being allocated
+  (STRING, ARRAY and inherts, or STRUCT)
 
 All operator nodes should have VREG. So should call nodes, the return values
 of function calls. All mathematical and comparison operator nodes should have

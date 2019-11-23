@@ -1,4 +1,4 @@
-#include "symtable.h"
+#include "middleman.h"
 
 int type_checker::make_symbol_table(astree* root) {
     int ret = 0;

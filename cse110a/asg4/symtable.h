@@ -1,10 +1,11 @@
 #ifndef __SYMTABLE_H__
 #define __SYMTABLE_H__
 
-#include <cstddef>
+#include <cstdint>
 #include <bitset>
 #include <unordered_map>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -15,15 +16,14 @@ using namespace std;
 struct astree;
 struct location;
 
-enum class attr {
+enum class attr : long unsigned int {
     VOID, INT, NULLPTR_T, STRING, STRUCT, ARRAY, FUNCTION, VARIABLE,
     FIELD, TYPEID, PARAM, LOCAL, LVAL, CONST, VREG, VADDR, BITSET_SIZE,
 };
-constexpr long unsigned int NUM_TYPE_ATTRIBUTES =
-        static_cast<long unsigned int>(attr::BITSET_SIZE);
 
 struct symbol_value {
-    using attr_bitset = bitset<NUM_TYPE_ATTRIBUTES>; 
+    using attr_bitset = bitset<
+            static_cast<long unsigned int>(attr::BITSET_SIZE)>;
     using symbol_table = unordered_map<string*,symbol_value*>;
     using symbol_entry = symbol_table::value_type;
 

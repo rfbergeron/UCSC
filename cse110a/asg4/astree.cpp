@@ -5,9 +5,9 @@
 #include <iostream>
 using namespace std;
 
-#include "astree.h"
 #include "string_set.h"
-#include "lyutils.h"
+#include "middleman.h"
+#include "yyparse.h"
 
 const char* astree::NOINFO = "";
 
@@ -27,60 +27,59 @@ astree::astree (int symbol_, const location& loc_, const char* info):
                 lexinfo (string_set::intern (info)), firstborn(this),
                 next_sibling(nullptr) {
     const char* tname = parser::get_tname(symbol_);
-    switch(tname) {
-        case "TOK_VOID":
-            attributes.set(VOID);
+    switch(symbol_) {
+        case TOK_VOID:
+            attributes.set((size_t)attr::VOID);
             break;
-        case "TOK_FUNCTION":
-            attributes.set(FUNCTION);
+        case TOK_FUNCTION:
+            attributes.set((size_t)attr::FUNCTION);
             break;
-        case "TOK_ARRAY":
-            attributes.set(ARRAY);
+        case TOK_ARRAY:
+            attributes.set((size_t)attr::ARRAY);
             break;
-        case "'+'":
-        case "'-'":
-        case "'/'":
-        case "'*'":
-        case "'%'":
-        case "TOK_EQ":
-        case "TOK_NE":
-        case "TOK_LT":
-        case "TOK_LE":
-        case "TOK_GT":
-        case "TOK_GE":
-        case "'+'":
-        case "'-'":
-        case "TOK_NOT":
-            attributes.set(INT);
-        case "'='":
-        case "TOK_ALLOC":
-        case "TOK_CALL":
-            attributes.set(VREG);
+        case '+':
+        case '-':
+        case '/':
+        case '*':
+        case '%':
+        case TOK_EQ:
+        case TOK_NE:
+        case TOK_LT:
+        case TOK_LE:
+        case TOK_GT:
+        case TOK_GE:
+        case TOK_NOT:
+            attributes.set((size_t)attr::INT);
+        case '=':
+        case TOK_ALLOC:
+        case TOK_CALL:
+            attributes.set((size_t)attr::VREG);
             break;
-        case "TOK_ARROW":
-        case "TOK_INDEX":
-            attributes.set(LVAL);
-            attributes.set(VADDR);
+        case TOK_ARROW:
+        case TOK_INDEX:
+            attributes.set((size_t)attr::LVAL);
+            attributes.set((size_t)attr::VADDR);
             break;
-        case "TOK_STRUCT":
-            attributes.set(STRUCT);
-            attributes.set(TYPEID);
+        case TOK_STRUCT:
+            attributes.set((size_t)attr::STRUCT);
+            attributes.set((size_t)attr::TYPEID);
             break;
-        case "TOK_NULLPTR":
-            attributes.set(NULLPTR_T);
-            attributes.set(CONST);
+        case TOK_NULLPTR:
+            attributes.set((size_t)attr::NULLPTR_T);
+            attributes.set((size_t)attr::CONST);
             break;
-        case "TOK_INTCON":
-        case "TOK_CHARCON":
-            attributes.set(CONST);
-        case "TOK_INT":
-            attributes.set(INT);
+        case TOK_INTCON:
+        case TOK_CHARCON:
+            attributes.set((size_t)attr::CONST);
+        case TOK_INT:
+            attributes.set((size_t)attr::INT);
             break;
-        case "TOK_STRINGCON":
-            attributes.set(CONST);
-        case "TOK_STRING":
-            attributes.set(STRING);
+        case TOK_STRINGCON:
+            attributes.set((size_t)attr::CONST);
+        case TOK_STRING:
+            attributes.set((size_t)attr::STRING);
             break;
+    }
 }
 
 astree::~astree() {

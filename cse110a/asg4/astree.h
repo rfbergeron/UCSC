@@ -6,13 +6,15 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 using namespace std;
 
 #include "auxlib.h"
-#include "middleman.h"
+#include "lyutils.h"
 
 struct symbol_value;
+enum class attr: long unsigned int;
 
 struct location {
    size_t filenr {};
@@ -24,7 +26,7 @@ ostream& operator<< (ostream&, const location&);
 
 struct astree {
    using attr_bitset =
-           bitset<static_cast<long unsigned int>(NUM_TYPE_ATTRIBUTES)>; 
+           bitset<static_cast<long unsigned int>(16)>; 
    using symbol_table = unordered_map<string*,symbol_value*>;
    using symbol_entry = symbol_table::value_type;
 
