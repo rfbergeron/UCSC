@@ -10,10 +10,14 @@
 #include <fstream>
 using namespace std;
 
-#include "astree.h"
 #include "auxlib.h"
+#include "middleman.h"
 
 #define YYEOF 0
+
+// forward declarations
+struct astree;
+struct location;
 
 extern FILE* yyin;
 extern char* yytext; 

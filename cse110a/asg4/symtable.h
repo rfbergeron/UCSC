@@ -9,38 +9,48 @@
 using namespace std;
 
 #include "auxlib.h"
-#include "astree.h"
-#include "lyutils.h"
+#include "middleman.h"
 
-using attr_bitset = bitset<attr::BITSET_SIZE>; 
-using symbol_table = unordered_map<string*,symbol*>;
-using symbol_entry = symbol_table::value_type;
+// circular dependency with astree; forward declare
+struct astree;
+struct location;
 
 enum class attr {
-j   VOID, INT, NULLPTR_T, STRING, STRUCT, ARRAY, FUNCTION, VARIABLE,
+    VOID, INT, NULLPTR_T, STRING, STRUCT, ARRAY, FUNCTION, VARIABLE,
     FIELD, TYPEID, PARAM, LOCAL, LVAL, CONST, VREG, VADDR, BITSET_SIZE,
 };
+constexpr long unsigned int NUM_TYPE_ATTRIBUTES =
+        static_cast<long unsigned int>(attr::BITSET_SIZE);
 
-struct symbol {
+struct symbol_value {
+    using attr_bitset = bitset<NUM_TYPE_ATTRIBUTES>; 
+    using symbol_table = unordered_map<string*,symbol_value*>;
+    using symbol_entry = symbol_table::value_type;
+
     attr_bitset attributes;
     size_t sequence;
-    unordered_map<string*,symbol*>* fields;
-    location lloc;
+    symbol_table* fields;
+    //struct location lloc;
     size_t block_nr;
-    vector<symbol*> parameters;
+    vector<symbol_value*> parameters;
 };
 
 class type_checker {
     private:
+        using attr_bitset = bitset<
+                static_cast<long unsigned int>(attr::BITSET_SIZE)>; 
+        using symbol_table = unordered_map<string*,symbol_value*>;
+        using symbol_entry = symbol_table::value_type;
+
         static symbol_table type_names;
         static symbol_table globals;
         static symbol_table locals;
-        static int next_block = 0;
+        static int next_block;
     public:
-        static int make_symbol_table(astree*);
+        /*static int make_symbol_table(astree*);
         static int make_function_entry(astree*);
         static int make_structure_entry(astree*);
-        static int make_global_entry(astree*);
+        static int make_global_entry(astree*);*/
         static void dump_symbol_table();
 };
 #endif

@@ -28,6 +28,67 @@ ofstream tokfile;
 ofstream astfile;
 ofstream symfile;
 
+// Print the meaning of a signal.
+static string sig_text (int signal) {
+   string sig_nr = to_string (signal);
+   const char* sigstr = strsignal (signal);
+   if (sigstr == nullptr) return sig_nr;
+                     else return sig_nr + " (" + sigstr + ")";
+}
+
+// Print the status returned from a subprocess.
+void cerr_status (const char* command, int status) {
+   if (status == 0) return; 
+   cerr << command << ": " << status << setw(4) << setfill('0')
+        << hex << status << setfill(' ') << dec;
+   if (WIFEXITED (status)) {
+      cerr << ", exit " << WEXITSTATUS (status);
+   }
+   if (WIFSIGNALED (status)) {
+      cerr << ", Terminated signal " << sig_text (WTERMSIG (status));
+      #ifdef WCOREDUMP
+      if (WCOREDUMP (status)) cerr << ", core dumped";
+      #endif
+   }
+   if (WIFSTOPPED (status)) {
+      cerr << ", Stopped signal ", sig_text (WSTOPSIG (status));
+   }
+   if (WIFCONTINUED (status)) {
+      cerr << ", Continued";
+   }
+   cerr << endl;
+}
+
+void scan_options(int argc, char** argv) { 
+   opterr = 0;
+   for (;;) {
+      int option = getopt (argc, argv, "@:D:ly");
+      if (option == EOF) break;
+      switch (option) {
+         case '@':
+            debug::setflags (optarg);
+            break;
+         case 'D':
+            // cpp args
+            DEBUGH('c', "     cpp option: " << optarg);
+            cpp_opts.append(" -D ").append(optarg);
+            break;
+         case 'l':
+            DEBUGH('c', "     yy_flex_debug set to 1");
+            yy_flex_debug = 1;
+            break;
+         case 'y':
+            DEBUGH('c', "     yydebug set to 1");
+            yydebug = 1;
+            break;
+         default:
+            cerr << "-" << char (optopt) << ": invalid option"
+               << endl;
+            break;
+      }
+   }
+}
+
 int main(int argc, char** argv) {
    yydebug = 0;
    yy_flex_debug = 0;
@@ -98,7 +159,7 @@ int main(int argc, char** argv) {
       else {
         cerr << "Parsing failed with status " << parse_status << endl;  
       }
-      pclose_status = pclose(yyin);
+      int pclose_status = pclose(yyin);
       cerr_status (command.c_str(), pclose_status);
       strfile.close();
       tokfile.close();

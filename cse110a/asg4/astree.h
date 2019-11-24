@@ -10,7 +10,9 @@
 using namespace std;
 
 #include "auxlib.h"
-#include "symtable.h"
+#include "middleman.h"
+
+struct symbol_value;
 
 struct location {
    size_t filenr {};
@@ -21,6 +23,10 @@ struct location {
 ostream& operator<< (ostream&, const location&);
 
 struct astree {
+   using attr_bitset =
+           bitset<static_cast<long unsigned int>(NUM_TYPE_ATTRIBUTES)>; 
+   using symbol_table = unordered_map<string*,symbol_value*>;
+   using symbol_entry = symbol_table::value_type;
 
    // Fields.
    int symbol;                   // token code
