@@ -31,11 +31,18 @@ operands checked.
 ### `make_symbol_table`
 Main loop. Doesn't do much on it's own, mostly passes off work to helper
 functions to make it a little nicer to look at and to help with naming.
+At the top level, nodes should only be TOK_FUNCTION, TOK_STRUCT,
+TOK_TYPE_ID, or "'='", with the latter indicating a global declaration
+and initialization, which means we have to verify the type of the right
+side in addition to making a new entry in the symbol table.
 
 ### `make_function_entry`
 Called whenever a top-level declaration (not call) of a function is found.
 Functions go in the same table as global variables. Increases global block
-count whether this is the actual definiton or just a prototype.
+count whether this is the actual definiton or just a prototype, since the
+parameters of a function prototype belong to the prototype's block. When
+adding the declaration to parser output, the location of the function's
+prototype, if there is one, is used, not the location of the definition.
 
 ### `make_global_entry`
 Called whenever a global variable declaration is found.
@@ -46,6 +53,11 @@ Called whenever a structure is defined.
 ### `make_local_entry`
 Called whenever a local variable is encountered in a function. Used for
 parameters as well as normal local variables.
+
+### `validate_global`
+Called whenever a top level "'='" is encountered. Verifies the type of the
+right child and makes a global entry. Bascially just a call to
+`make_global_entry` and `validate_expression`.
 
 ### `validate_block`
 Called when entering a function or when entering a block inside of another
@@ -87,6 +99,11 @@ definitions? Like when a ptr<struct X> is declared (the only way a struct
 can be instantiated), the node containing X will have the TYPEID attribute.
 Also used when a structure is allocated.
 
+No, actually TYPEID is assigned to structure type declarations. Instantiating
+a structure with ptr<struct X> just has the attribute STRUCT.
+
+Who the fuck knows
+
 - TOK_STRUCT: STRUCT, used only in declaration so nothing to inherit.
   Also not an LVAL since it is used for declaration.
 - TOK_INDEX: VADDR, LVAL, other attributes come from an expression and
@@ -102,9 +119,12 @@ Also used when a structure is allocated.
 - TOK_ARROW: VADDR, LVAL
 - TOK_ARRAY: ARRAY, inherits attributes of its type
 - TOK_FUNCTION: FUNCTION, inherits attributes of its return type
-- TOK_TYPE_ID: inherits attributes of its type
 - TOK_ALLOC: VREG, attributes of the type being allocated
   (STRING, ARRAY and inherts, or STRUCT)
+- TOK_TYPE_ID: inherits attributes of its type. Can also be an LVAL,
+  but not when it is a part of a function declaration or structure
+  declaration? Only when it is declared as a variable, paramerer,
+  or global.
 
 All operator nodes should have VREG. So should call nodes, the return values
 of function calls. All mathematical and comparison operator nodes should have

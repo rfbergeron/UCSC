@@ -25,7 +25,7 @@ ostream& operator<< (ostream&, const location&);
 struct astree {
    using attr_bitset =
            bitset<static_cast<long unsigned int>(16)>; 
-   using symbol_table = unordered_map<string*,symbol_value*>;
+   using symbol_table = unordered_map<const string*,symbol_value*>;
    using symbol_entry = symbol_table::value_type;
 
    // Fields.

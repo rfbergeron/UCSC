@@ -22,17 +22,21 @@ enum class attr : long unsigned int {
     FIELD, TYPEID, PARAM, LOCAL, LVAL, CONST, VREG, VADDR, BITSET_SIZE,
 };
 
+enum class type_err {
+    NODECL, REDECL, BADTYPE, NOARR, BADRET,
+};
+
 struct symbol_value {
     using attr_bitset = bitset<
             static_cast<long unsigned int>(attr::BITSET_SIZE)>;
-    using symbol_table = unordered_map<string*,symbol_value*>;
+    using symbol_table = unordered_map<const string*,symbol_value*>;
     using symbol_entry = symbol_table::value_type;
 
     attr_bitset attributes;
-    size_t sequence;
-    symbol_table* fields;
-    //struct location lloc;
-    size_t block_nr;
+    size_t sequence = 0;
+    symbol_table* fields = nullptr;
+    struct location lloc;
+    size_t block_nr = 0;
     vector<symbol_value*> parameters;
 };
 
@@ -40,12 +44,13 @@ class type_checker {
     private:
         using attr_bitset = bitset<
                 static_cast<long unsigned int>(attr::BITSET_SIZE)>; 
-        using symbol_table = unordered_map<string*,symbol_value*>;
+        using symbol_table = unordered_map<const string*,symbol_value*>;
         using symbol_entry = symbol_table::value_type;
 
-        static symbol_table type_names;
-        static symbol_table globals;
-        static symbol_table locals;
+        static symbol_table* type_names;
+        static symbol_table* globals;
+        static symbol_table* locals;
+        static const unordered_map<type_err,const string> type_errs;
         static int next_block;
     public:
         static int make_symbol_table(astree*);
@@ -57,5 +62,7 @@ class type_checker {
         static int validate_statement(astree*, const string*);
         static int validate_expression(astree*);
         static void dump_symbol_table();
+        static void symbol_error(astree*, type_err);
+        static void destroy_tables();
 };
 #endif
