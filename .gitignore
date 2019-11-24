@@ -57,6 +57,9 @@
 
 # cse110a specific
 cse110a/util-code
+**/yyparse.*
+**/yylex.*
+**/oc
 
 # cs112 ignores
 cs112/hw2-rbergero/img
