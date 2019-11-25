@@ -8,6 +8,7 @@ symbol_table* type_checker::type_names = new symbol_table();
 symbol_table* type_checker::globals = new symbol_table();
 vector<symbol_table*> type_checker::local_tables;
 int type_checker::next_block = 1;
+const attr_bitset type_checker::TYPE_ATTR_MASK;
 const unordered_map<attr,const string> type_checker::attr_map= {
       {attr::VOID,      "void"     },
       {attr::INT,       "int"      },
@@ -27,22 +28,36 @@ const unordered_map<attr,const string> type_checker::attr_map= {
       {attr::VADDR,     "vaddr"    }};
 
 ostream& operator<< (ostream& out, const attr& attribute) {
-   //DEBUGH('t', "Printing an attribute");
    return out << type_checker::attr_map.at(attribute);
 }
 
-ostream& operator<< (ostream&out, const attr_bitset& attributes) {
+/*ostream& operator<< (ostream&out, const attr_bitset& attributes) {
     if(attributes.test(0)) out << static_cast<attr>(0);
     for(size_t i = 1; i < (size_t)attr::BITSET_SIZE; ++i) {
         if(attributes.test(i)) out << " " << static_cast<attr>(i);
     }
     return out;
-}
+}*/
 
 ostream& operator<< (ostream& out, const symbol_value* symval) {
-   //DEBUGH('t', "Printing a symbol_value");
-   return out << symval->lloc << " {" << symval->block_nr << "} "
-              << symval->attributes;
+   out << symval->lloc << " {" << symval->block_nr << "}";
+   for(size_t i = 1; i < (size_t)attr::BITSET_SIZE; ++i) {
+      if(symval->attributes.test(i)) {
+         if(i == (size_t)attr::STRUCT) {
+            if(symval->fields == nullptr) {
+                DEBUGH('s', "Printing struct type");
+                out << " ptr <struct " << *(symval->type_id) << ">";
+            } else {
+                DEBUGH('s', "Printing " << static_cast<attr>(i) << " type");
+                out << " " << static_cast<attr>(i) << " "
+                    << *(symval->type_id);
+            }
+         } else {
+            out << " " << static_cast<attr>(i);
+         }
+      }
+   }
+   return out;
 }
 
 symbol_value::symbol_value(astree* tree, size_t sequence_,
@@ -60,23 +75,20 @@ symbol_value::~symbol_value() {
         }
         delete fields;
     }
-    for(auto iter = parameters.begin(); iter != parameters.end(); ++iter) {
-        delete *iter;
-    }
 }
 
 int type_checker::make_symbol_table(astree* root) {
     int ret = 0;
     DEBUGH('t', "Making symbol table");
     for(astree* child : root->children) {
-        if(child->attributes.test((size_t)attr::STRUCT)) {
-            // handle structure definition
-            make_structure_entry(child);
-        } else if(child->attributes.test((size_t)attr::FUNCTION)) {
+        if(child->attributes.test((size_t)attr::FUNCTION)) {
             // handle function definition
             make_function_entry(child);
         } else if(child->attributes.test((size_t)attr::VREG)) {
             // handle global identifier declaration, with assignment
+        } else if(child->children[0]->lexinfo->compare("struct")) {
+            // handle structure definition
+            make_structure_entry(child);
         } else {
             // global identifier, no assignment. That's the only other
             // thing the parser should be letting through at the top
@@ -145,7 +157,7 @@ int type_checker::make_function_entry(astree* function) {
         return -1;
     }
     if(function->attributes.test((size_t)attr::STRUCT)) {
-        if(type_names->at(function->type_id) == nullptr) {
+        if(type_names->find(function->type_id) == type_names->end()) {
             // error; structure not defined
             cerr << "ERROR: Structure has no definition: "
                  << function->type_id << endl;
@@ -271,16 +283,18 @@ void type_checker::dump_symbols(ostream& out) {
 }
 
 void type_checker::destroy_tables() {
-    DEBUGH('t', "  DESTROYING SYMTABLES");
+    DEBUGH('t', "  DESTROYING TYPE NAME SYMTABLE");
     for(auto iter = type_names->begin(); iter != type_names->end();
             ++iter) {
         delete iter->second;
     }
     delete type_names;
+    DEBUGH('t', "  DESTROYING GLOBAL SYMTABLE");
     for(auto iter = globals->begin(); iter != globals->end(); ++iter) {
         delete iter->second;
     }
     delete globals;
+    DEBUGH('t', "  DESTROYING LOCAL SYMTABLES");
     for(auto local_iter = local_tables.begin(); local_iter !=
             local_tables.end(); ++local_iter) {
         symbol_table* locals = *local_iter;

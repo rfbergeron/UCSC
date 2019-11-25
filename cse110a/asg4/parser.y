@@ -59,7 +59,7 @@ structbody  : type TOK_IDENT ';'             { $$ = parser::
             | structbody type 
               TOK_IDENT ';'                  { $$ = $1->buddy_up(
                                                 parser::
-                                                make_type_id($3, $4)); }
+                                                make_type_id($2, $3)); }
             ;
 function    : type TOK_IDENT 
               '(' parameters ')' block       { $$ =
@@ -159,8 +159,8 @@ allocator   : TOK_ALLOC '<' TOK_STRING
                                                }
             | TOK_ALLOC '<' TOK_ARRAY '<'
               plaintype '>' '>' '(' expr ')' { $$ = $1->adopt_attributes
-                                               ($3->adopt($5))
-                                               ->adopt($9); }
+                                               ($3->adopt_attributes($5)
+                                               )->adopt($9); }
             ;
 call        : TOK_IDENT '(' exprs ')'        { $$ = $2->adopt_sym(
                                                TOK_CALL, $1, $3); }
@@ -208,7 +208,7 @@ astree* parser::make_type_id(astree* type, astree* id, astree* expr) {
 
 astree* parser::make_struct(astree* parent, astree* structure_id,
        astree* structure_body) {
-    structure_id->attributes.set((size_t)attr::TYPEID);
+    //structure_id->attributes.set((size_t)attr::TYPEID);
     parent->type_id=structure_id->lexinfo;
     return parent->adopt(structure_id, structure_body);
 }

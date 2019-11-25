@@ -24,7 +24,7 @@ enum class attr : long unsigned int {
 
 using attr_bitset = bitset<static_cast<long unsigned int>(16)>;
 ostream& operator<< (ostream&, const attr&);
-ostream& operator<< (ostream&, const attr_bitset&);
+//ostream& operator<< (ostream&, const attr_bitset&);
 
 enum class type_err {
     NODECL, REDECL, BADTYPE, NOARR, BADRET,
@@ -67,7 +67,7 @@ class type_checker {
         static symbol_table* globals;
         static vector<symbol_table*> local_tables;
         static const unordered_map<type_err,const string> type_errs;
-        static const attr_bitset TYPE_MASK;
+        static const attr_bitset TYPE_ATTR_MASK;
         static int next_block;
     public:
         static const unordered_map<attr,const string> attr_map;

@@ -21,18 +21,17 @@ ostream& operator<< (ostream& out, const astree* tree) {
    const char* tname = parser::get_tname (tree->symbol);
    tname += 4;
    out << tname << " \"" << *tree->lexinfo << "\" " << tree->loc
-       << " {" << tree->block_nr << "} ";
+       << " {" << tree->block_nr << "}";
    for(size_t i = 0; i < (size_t)attr::BITSET_SIZE; ++i) {
       if(tree->attributes.test(i)) {
-         out << static_cast<attr>(i) << " ";
-         if(i == static_cast<size_t>(attr::STRUCT)) {
-            out << tree->type_id << " ";
-         }
+         out << " " << static_cast<attr>(i);
+         if(i == static_cast<size_t>(attr::STRUCT))
+            out << " " << *(tree->type_id);
       }
    }
 
    if(tree->symbol == TOK_IDENT) {
-      out << "(loc here)";
+      out << " (loc here)";
    }
    return out;
 }
@@ -76,8 +75,8 @@ astree::astree (int symbol_, const location& loc_, const char* info):
             attributes.set((size_t)attr::VADDR);
             break;
         case TOK_STRUCT:
+        case TOK_PTR:
             attributes.set((size_t)attr::STRUCT);
-            attributes.set((size_t)attr::TYPEID);
             break;
         case TOK_NULLPTR:
             attributes.set((size_t)attr::NULLPTR_T);
@@ -143,6 +142,7 @@ astree* astree::adopt_sym (int symbol_, astree* child1,
 
 astree* astree::adopt_attributes (astree* child) {
     attributes |= child->attributes;
+    type_id = child->type_id;
     return adopt(child);
 }
 
