@@ -23,8 +23,7 @@ struct location {
 ostream& operator<< (ostream&, const location&);
 
 struct astree {
-   using attr_bitset =
-           bitset<static_cast<long unsigned int>(16)>; 
+   using attr_bitset = bitset<static_cast<long unsigned int>(16)>;
    using symbol_table = unordered_map<const string*,symbol_value*>;
    using symbol_entry = symbol_table::value_type;
 
@@ -37,7 +36,6 @@ struct astree {
    astree* firstborn;            // head of the list of siblings
    size_t block_nr = 0;          // block number this node occurs in
    attr_bitset attributes;       // type attributes
-   symbol_table* structure_fields = nullptr; // structure fields
    const string* type_id = nullptr; // structure type
    static const char* NOINFO;    // use indicates no lexical info
 

@@ -6,7 +6,7 @@
 These two files will contain most of the code that handles creation
 of the symbol table and type checking.
 
-### `struct symbol`
+### `struct symbol_value`
 Contains a bitset of attributes which describe the symbol's type,
 the sequence number that this variable was declared in (ie how many
 other variables were declared before this one in the same scope. This
@@ -14,6 +14,14 @@ number is 0 for all global declarations.), the block/scope number that
 this symbol belongs to, a pointer to another symbol table to be used
 for structure fields, and a vector of symbols to be used for function
 parameters, the location where this symbol was declared.
+
+### `symbol_value::symbol_value`
+Constructor fo `struct symbol_value`. Takes as arguments the `astree*`
+node it is based on, the block number it exists in, its sequence in
+the block number, a `symbol_table*` of fields (if this is for a struct),
+and a `vector<symbol_value*>` of parameters (if this is for a function).
+All? values except for the `astree*` should have a default value, since
+they often will not be necessary. 
 
 ## 1.2 `class type_checker`
 Has all the methods for making the symbol table and type checking.
@@ -45,7 +53,9 @@ adding the declaration to parser output, the location of the function's
 prototype, if there is one, is used, not the location of the definition.
 
 ### `make_global_entry`
-Called whenever a global variable declaration is found.
+Called whenever a global variable declaration is found. Check if an entry
+has already been made for the id, error if it has. Set the attributes
+LVAL and VARIABLE. Make entry in the global table.
 
 ### `make_structure_entry`
 Called whenever a structure is defined.

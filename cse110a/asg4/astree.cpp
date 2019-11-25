@@ -38,9 +38,9 @@ ostream& operator<< (ostream& out, const astree* tree) {
 }
 
 astree::astree (int symbol_, const location& loc_, const char* info):
-                symbol (symbol_), loc (loc_),
-                lexinfo (string_set::intern (info)), firstborn(this),
-                next_sibling(nullptr) {
+        symbol (symbol_), loc (loc_),
+        lexinfo (string_set::intern (info)), firstborn(this),
+        next_sibling(nullptr) {
     const char* tname = parser::get_tname(symbol_);
     switch(symbol_) {
         case TOK_VOID:

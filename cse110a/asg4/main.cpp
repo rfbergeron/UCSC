@@ -104,8 +104,7 @@ int main(int argc, char** argv) {
    size_t ext_index = oc_name.rfind(OC_EXT);
    if(ext_index == string::npos ||
          OC_EXT.compare(oc_name.substr(ext_index))) {
-      cerr << "not an .oc file: " << oc_name << " " <<
-         oc_name.substr(ext_index) << endl;
+      cerr << "not an .oc file: " << oc_name << endl;
       return EXIT_FAILURE;
    }
 
@@ -156,7 +155,9 @@ int main(int argc, char** argv) {
          DEBUGH('y', "  bison parse was successful");
          // do type checking
          string_set::dump(strfile);
+         type_checker::make_symbol_table(parser::root);
          astree::print(astfile, parser::root, 0); 
+         type_checker::dump_symbols(symfile);
          DEBUGH('y', "  all outputs dumped");
          type_checker::destroy_tables();
       }

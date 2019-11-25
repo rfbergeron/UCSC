@@ -207,9 +207,9 @@ astree* parser::make_type_id(astree* type, astree* id, astree* expr) {
 }
 
 astree* parser::make_struct(astree* parent, astree* structure_id,
-      astree* structure_body) {
+       astree* structure_body) {
     structure_id->attributes.set((size_t)attr::TYPEID);
-    // parent->type_id=structure_id->lexinfo;
+    parent->type_id=structure_id->lexinfo;
     return parent->adopt(structure_id, structure_body);
 }
 
