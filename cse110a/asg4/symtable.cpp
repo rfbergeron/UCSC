@@ -6,6 +6,31 @@ using symbol_table = unordered_map<const string*,symbol_value*>;
 symbol_table* type_checker::type_names = new symbol_table();
 symbol_table* type_checker::globals = new symbol_table();
 symbol_table* type_checker::locals = new symbol_table();
+const unordered_map<attr,const string> type_checker::attr_map= {
+      {attr::VOID,      "void"     },
+      {attr::INT,       "int"      },
+      {attr::NULLPTR_T, "nullptr"  },
+      {attr::STRING,    "string"   },
+      {attr::STRUCT,    "struct"   },
+      {attr::ARRAY,     "array"    },
+      {attr::FUNCTION,  "function" },
+      {attr::VARIABLE,  "variable" },
+      {attr::FIELD,     "field"    },
+      {attr::TYPEID,    "typeid"   },
+      {attr::PARAM,     "param"    },
+      {attr::LOCAL,     "local"    },
+      {attr::LVAL,      "lval"     },
+      {attr::CONST,     "const"    },
+      {attr::VREG,      "vreg"     },
+      {attr::VADDR,     "vaddr"    }};
+
+ostream& operator<< (ostream& out, const attr& attribute) {
+   return out << type_checker::attr_map.at(attribute);
+}
+
+ostream& operator<< (ostream& out, const symbol_value* symval) {
+   return out << symval;
+}
 
 int type_checker::make_symbol_table(astree* root) {
     int ret = 0;
@@ -84,7 +109,8 @@ int type_checker::make_structure_entry(astree* structure) {
         
     }
     // check and add parameters
-    for(const astree* parameter_node : function->children[1]->children) {
+    for(const astree* parameter_node :
+      function->children[1]->children) {
         astree* type_node = parameter_node->children[1];
         string type_tok = {parser::get_tname(type_node->symbol)};
         if(type_tok.compare("TOK_ARRAY") {
@@ -94,7 +120,9 @@ int type_checker::make_structure_entry(astree* structure) {
 }*/
 
 void type_checker::destroy_tables() {
+    DEBUGH('t', "  DESTROYING SYMTABLES");
     delete type_names;
     delete globals;
     delete locals;
+    DEBUGH('t', "  SYMTABLES DESTROYED");
 }

@@ -20,7 +20,21 @@ ostream& operator<< (ostream& out, const location& loc) {
 ostream& operator<< (ostream& out, const astree* tree) {
    const char* tname = parser::get_tname (tree->symbol);
    tname += 4;
-   return out << tname << " \"" << *tree->lexinfo << "\" " << tree->loc;
+   out << tname << " \"" << *tree->lexinfo << "\" " << tree->loc
+       << " {" << tree->block_nr << "} ";
+   for(size_t i = 0; i < (size_t)attr::BITSET_SIZE; ++i) {
+      if(tree->attributes.test(i)) {
+         out << static_cast<attr>(i) << " ";
+         if(i == static_cast<size_t>(attr::STRUCT)) {
+            out << tree->type_id << " ";
+         }
+      }
+   }
+
+   if(tree->symbol == TOK_IDENT) {
+      out << "(loc here)";
+   }
+   return out;
 }
 
 astree::astree (int symbol_, const location& loc_, const char* info):

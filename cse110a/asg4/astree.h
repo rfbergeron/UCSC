@@ -38,6 +38,7 @@ struct astree {
    size_t block_nr = 0;          // block number this node occurs in
    attr_bitset attributes;       // type attributes
    symbol_table* structure_fields = nullptr; // structure fields
+   const string* type_id = nullptr; // structure type
    static const char* NOINFO;    // use indicates no lexical info
 
    // Functions.

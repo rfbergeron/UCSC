@@ -60,8 +60,8 @@ struct parser {
          astree* paren, astree* params, astree* block);
    static astree* make_type_id (astree* type, astree* id,
          astree* expr = nullptr);
-   static astree* make_struct_ref (astree* parent,
-         astree* structure_id);
+   static astree* make_struct (astree* parent,
+         astree* structure_id, astree* structure_body = nullptr);
 };
 
 #define YYSTYPE_IS_DECLARED

@@ -13,6 +13,7 @@
 #include "string_set.h"
 #include "lyutils.h"
 #include "astree.h"
+#include "symtable.h"
 #include "yyparse.h"
 
 const string CPP = "/usr/bin/cpp";
@@ -154,7 +155,10 @@ int main(int argc, char** argv) {
       if(parse_status == 0) {
          DEBUGH('y', "  bison parse was successful");
          // do type checking
+         string_set::dump(strfile);
          astree::print(astfile, parser::root, 0); 
+         DEBUGH('y', "  all outputs dumped");
+         type_checker::destroy_tables();
       }
       else {
         cerr << "Parsing failed with status " << parse_status << endl;  
@@ -165,6 +169,7 @@ int main(int argc, char** argv) {
       tokfile.close();
       astfile.close();
       symfile.close();
+      DEBUGH('a', "  exiting");
       return EXIT_SUCCESS;
    }
 }

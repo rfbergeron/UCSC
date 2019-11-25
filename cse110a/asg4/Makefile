@@ -50,7 +50,7 @@ yyparse.h yyparse.cpp : parser.y
       --output=yyparse.cpp parser.y
 
 rmtest :
-	rm -f *.oc *.str *.err *.out *.tok *.log *.ast *.lexyacctrace
+	rm -f *.oc *.str *.tok *.ast *.sym *.oil *.err *.out *.log *.lexyacctrace oclib.h octypes.h
 
 clean :
 	rm -f ${OBJECTS} ${GCH} ${DEPFILE} ${GENS} ${HEADERGENS} \

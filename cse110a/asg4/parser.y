@@ -48,10 +48,11 @@ program     : program structdef              { $$ = $1->adopt($2); }
                                                parser::newroot(); }
             ;
 structdef   : TOK_STRUCT TOK_IDENT 
-              '{' structbody '}' ';'         { $$ =
-                                               $1->adopt($2, $4); } 
+              '{' structbody '}' ';'         { $$ = parser::make_struct(
+                                               $1, $2, $4); } 
             | TOK_STRUCT TOK_IDENT
-              '{' '}' ';'                    { $$ = $1->adopt($2); }
+              '{' '}' ';'                    { $$ = parser::make_struct(
+                                               $1, $2); }
             ;
 structbody  : type TOK_IDENT ';'             { $$ = parser::
                                                make_type_id($1, $2); }
@@ -72,7 +73,8 @@ function    : type TOK_IDENT
 parameters  : type TOK_IDENT                 { $$ = parser::
                                                make_type_id($1, $2); }
             | parameters ',' type TOK_IDENT  { $$ = $1->buddy_up(parser
-                                               ::make_type_id($3, $4)); }
+                                               ::make_type_id($3, $4));
+                                               }
             ;
 type        : plaintype                      { $$ = $1; }
             | TOK_VOID                       { $$ = $1; }
@@ -82,7 +84,7 @@ plaintype   : TOK_INT                        { $$ = $1; }
             | TOK_STRING                     { $$ = $1; }
             | TOK_PTR '<'
               TOK_STRUCT TOK_IDENT '>'       { $$ = parser::
-                                               make_struct_ref($1, $4);
+                                               make_struct($1, $4);
                                                }
             ;
 block       : '{' statements '}'             { $$ = $1->adopt_sym(
@@ -153,7 +155,7 @@ allocator   : TOK_ALLOC '<' TOK_STRING
                                                adopt($6); }
             | TOK_ALLOC '<' TOK_STRUCT
               TOK_IDENT '>' '(' ')'          { $$ = parser::
-                                               make_struct_ref($1, $4);
+                                               make_struct($1, $4);
                                                }
             | TOK_ALLOC '<' TOK_ARRAY '<'
               plaintype '>' '>' '(' expr ')' { $$ = $1->adopt_attributes
@@ -204,9 +206,11 @@ astree* parser::make_type_id(astree* type, astree* id, astree* expr) {
    return type_id->adopt_attributes(type)->adopt(id, expr);
 }
 
-astree* parser::make_struct_ref(astree* parent, astree* structure_id) {
+astree* parser::make_struct(astree* parent, astree* structure_id,
+      astree* structure_body) {
     structure_id->attributes.set((size_t)attr::TYPEID);
-    return parent->adopt(structure_id);
+    // parent->type_id=structure_id->lexinfo;
+    return parent->adopt(structure_id, structure_body);
 }
 
 bool is_defined_token (int symbol) {
