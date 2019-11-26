@@ -48,11 +48,9 @@ program     : program structdef              { $$ = $1->adopt($2); }
                                                parser::newroot(); }
             ;
 structdef   : TOK_STRUCT TOK_IDENT 
-              '{' structbody '}' ';'         { $$ = parser::make_struct(
-                                               $1, $2, $4); } 
+              '{' structbody '}' ';'         { $$ = $1->adopt($2, $4); } 
             | TOK_STRUCT TOK_IDENT
-              '{' '}' ';'                    { $$ = parser::make_struct(
-                                               $1, $2); }
+              '{' '}' ';'                    { $$ = $1->adopt($2); }
             ;
 structbody  : type TOK_IDENT ';'             { $$ = parser::
                                                make_type_id($1, $2); }
@@ -83,16 +81,13 @@ type        : plaintype                      { $$ = $1; }
 plaintype   : TOK_INT                        { $$ = $1; }
             | TOK_STRING                     { $$ = $1; }
             | TOK_PTR '<'
-              TOK_STRUCT TOK_IDENT '>'       { $$ = parser::
-                                               make_struct($1, $4);
-                                               }
+              TOK_STRUCT TOK_IDENT '>'       { $$ = $1->adopt($4); }
             ;
 block       : '{' statements '}'             { $$ = $1->adopt_sym(
                                                TOK_BLOCK, $2);  }
             | '{' '}'                        { $$ = $1->adopt_sym(
                                                TOK_BLOCK, nullptr); }
-            | ';'                            { $$ = $1->adopt_sym(
-                                               TOK_BLOCK, nullptr); }
+            | ';'                            { $$ = nullptr; }
             ;
 statements  : statement                      { $$ = $1; }
             | statements statement           { $$ = $1->buddy_up($2); }
@@ -152,17 +147,12 @@ exprs       : expr                           { $$ = $1; }
             | exprs ',' expr                 { $$ = $1->buddy_up($3); }
             ;
 allocator   : TOK_ALLOC '<' TOK_STRING
-              '>' '(' expr ')'               { $$ = $1->
-                                               adopt_attributes($3)->
-                                               adopt($6); }
+              '>' '(' expr ')'               { $$ = $1->adopt($3, $6); }
             | TOK_ALLOC '<' TOK_STRUCT
-              TOK_IDENT '>' '(' ')'          { $$ = parser::
-                                               make_struct($1, $4);
-                                               }
+              TOK_IDENT '>' '(' ')'          { $$ = $1->adopt($4); }
             | TOK_ALLOC '<' TOK_ARRAY '<'
-              plaintype '>' '>' '(' expr ')' { $$ = $1->adopt_attributes
-                                               ($3->adopt_attributes($5)
-                                               )->adopt($9); }
+              plaintype '>' '>' '(' expr ')' { $$ = $1->adopt($3->
+                                               adopt($5), $9); }
             ;
 call        : TOK_IDENT '(' exprs ')'        { $$ = $2->adopt_sym(
                                                TOK_CALL, $1, $3); }
@@ -199,13 +189,13 @@ astree* parser::make_function(astree* type, astree* id, astree* paren,
    astree* function = new astree(TOK_FUNCTION, type->loc,
          astree::NOINFO);
    astree* type_id = parser::make_type_id(type, id);
-   return function->adopt_attributes(type_id)->adopt(
-         paren->adopt_sym(TOK_PARAM, params), block);
+   return function->adopt(type_id, paren->adopt_sym(TOK_PARAM, params),
+         block);
 }
 
 astree* parser::make_type_id(astree* type, astree* id, astree* expr) {
    astree* type_id = new astree(TOK_TYPE_ID, type->loc, astree::NOINFO);
-   return type_id->adopt_attributes(type)->adopt(id, expr);
+   return type_id->adopt(type, id, expr);
 }
 
 astree* parser::make_struct(astree* parent, astree* structure_id,

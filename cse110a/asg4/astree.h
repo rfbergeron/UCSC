@@ -46,7 +46,6 @@ struct astree {
          astree* child3 = nullptr);
    astree* adopt_sym (int symbol, astree* child1,
          astree* child2 = nullptr);
-   astree* adopt_attributes (astree* child);
    astree* buddy_up (astree* sibling);
    astree* first();
    astree* second();

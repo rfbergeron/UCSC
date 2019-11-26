@@ -142,12 +142,6 @@ astree* astree::adopt_sym (int symbol_, astree* child1,
    return adopt (child1, child2);
 }
 
-astree* astree::adopt_attributes (astree* child) {
-    attributes |= child->attributes;
-    type_id = child->type_id;
-    return adopt(child);
-}
-
 astree* astree::buddy_up (astree* sibling) {
    // if it is the head of the list, this node points to itself
    sibling->firstborn = firstborn;

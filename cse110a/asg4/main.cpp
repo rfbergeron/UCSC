@@ -154,12 +154,17 @@ int main(int argc, char** argv) {
       if(parse_status == 0) {
          DEBUGH('y', "  bison parse was successful");
          // do type checking
-         string_set::dump(strfile);
-         type_checker::make_symbol_table(parser::root);
-         astree::print(astfile, parser::root, 0); 
-         type_checker::dump_symbols(symfile);
-         DEBUGH('y', "  all outputs dumped");
-         type_checker::destroy_tables();
+         int typecheck_status = type_checker::
+              make_symbol_table(parser::root);
+         if(typecheck_status == 0) {
+            string_set::dump(strfile);
+            astree::print(astfile, parser::root, 0); 
+            type_checker::dump_symbols(symfile);
+            DEBUGH('y', "  all outputs dumped");
+            type_checker::destroy_tables();
+         } else {
+            cerr << "Type checking failed" << endl;
+         }
       }
       else {
         cerr << "Parsing failed with status " << parse_status << endl;  
