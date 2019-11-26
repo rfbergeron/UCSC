@@ -55,11 +55,10 @@ ostream& operator<< (ostream& out, const symbol_value* symval) {
 }
 
 symbol_value::symbol_value(astree* tree, size_t sequence_,
-        size_t block_nr_, vector<symbol_value*> parameters_,
-        symbol_table* fields_):
+        size_t block_nr_):
         attributes(tree->attributes), lloc(tree->loc),
         type_id(tree->type_id), sequence(sequence_),
-        block_nr(block_nr_), parameters(parameters_), fields(fields_) {
+        block_nr(block_nr_) {
 }
 
 symbol_value::~symbol_value() {
@@ -107,41 +106,46 @@ int type_checker::make_global_entry(astree* global) {
     } else {
         global->attributes.set((size_t)attr::LVAL);
         global->attributes.set((size_t)attr::VARIABLE);
-        symbol_value* global_value = new symbol_value(global);
+        int status = validate_type_id(global);
+        if(status != 0) return -1;
+        symbol_value* global_value = new struct symbol_value(global);
         globals->insert({extract_ident(global), global_value});
         return 0;
     }
 }
 
 int type_checker::make_structure_entry(astree* structure) {
-    const string* structure_type = structure->children[0]->lexinfo;
-    int ret = 0;
+    const string* structure_type = structure->first()->lexinfo;
     DEBUGH('t', "Defining structure type: " << *structure_type);
     if(type_names->find(structure_type) != type_names->end()) {
-        // error; duplicate declaration
-        ret = -1;
+        cerr << "ERROR: Duplicate definition of structure "
+             << *structure_type << endl;
+        return -1;
     } else {
-        symbol_value* structure_value = new symbol_value(structure);
-        structure_value->fields = new symbol_table();
+        symbol_value* structure_value =
+                new struct symbol_value(structure);
+        symbol_table* fields = new symbol_table();
+        type_names->insert({structure_type, structure_value});
+        // start from 2nd child; 1st was type name
         for(size_t i = 1; i < structure->children.size(); ++i) {
-            astree* field_node = structure->children[i];
-            DEBUGH('t', "Found structure field: " <<
-                    *extract_ident(field_node));
-            if(structure_value->fields->find(extract_ident(field_node))
-                    != structure_value->fields->end()) {
-                // error; duplicate field names
-                ret = -1;
+            astree* field = structure->children[i];
+            const string* field_id_str = extract_ident(field);
+            DEBUGH('t', "Found structure field: " << *field_id_str);
+            if(fields->find(field_id_str) != fields->end()) {
+                cerr << "ERROR: Duplicate declaration of field: "
+                     << *field_id_str << endl;
+                return -1;
             } else {
+                int status = validate_type_id(field);
+                if(status != 0) return -1;
                 symbol_value* field_value = new struct symbol_value(
-                        field_node, i-1);
-                // maybe need to set sequence # for fields
-                structure_value->fields->insert({field_node->lexinfo,
-                        field_value});
+                        field, i-1);
+                fields->insert({field->lexinfo, field_value});
             }
         }
-        type_names->insert({structure_type, structure_value});
+        structure_value->fields = fields;
     }
-    return ret;
+    return 0;
 }
 
 int type_checker::make_function_entry(astree* function) {
@@ -172,23 +176,22 @@ int type_checker::make_function_entry(astree* function) {
     // check and add parameters
     set_block_nr(function->second(), next_block);
     astree* params = function->second();
+    size_t param_sequence_nr = 0;
     for(size_t i = 0; i < params->children.size(); ++i) {
-        astree* param_node = params->children[i];
-        const string* param_id_str = extract_ident(param_node);
+        astree* param = params->children[i];
+        const string* param_id_str = extract_ident(param);
         if(locals->find(param_id_str) != locals->end()) {
         // TODO: add location of previous declaration
             cerr << "ERROR: Duplicate declaration of parameter: "
                  << *param_id_str << endl;
             return -1;
         }
-        astree* param_identifier = param_node->second();
-        param_identifier->attributes.set((size_t)attr::VARIABLE);
-        param_identifier->attributes.set((size_t)attr::LVAL);
+        astree* param_identifier = param->second();
         param_identifier->attributes.set((size_t)attr::PARAM);
-        status = validate_type_id(param_node);
+        status = make_local_entry(param, param_sequence_nr);
         if(status != 0) return status;
         struct symbol_value* param_entry = new struct symbol_value(
-                param_node, i, next_block);
+                param, i, next_block);
         locals->insert({param_id_str,param_entry});
         function_entry->parameters.push_back(param_entry);
     }
@@ -218,6 +221,7 @@ int type_checker::make_function_entry(astree* function) {
         globals->insert({function_id, function_entry});
         if(function->children.size() == 3) {
             size_t sequence_nr = 0;
+            set_block_nr(function->third(), next_block);
             status = validate_block(function->third(), function_id,
                     sequence_nr);
             if(status != 0) return status;
@@ -233,7 +237,8 @@ int type_checker::make_function_entry(astree* function) {
 
 int type_checker::make_local_entry(astree* local, size_t& sequence_nr) {
     if(locals->find(extract_ident(local)) != locals->end()) {
-        //error; duplicate declaration
+        cerr << "ERROR: Duplicate declaration of variable: "
+             << *extract_ident(local) << endl;
         return -1;
     } else {
         astree* type = local->first();
@@ -242,8 +247,10 @@ int type_checker::make_local_entry(astree* local, size_t& sequence_nr) {
         identifier->attributes.set((size_t)attr::VARIABLE);
         int status = validate_type_id(local);
         if(status != 0) return -1;
-        symbol_value* local_value = new symbol_value(local);
+        symbol_value* local_value = new struct 
+                symbol_value(local, sequence_nr, next_block);
         locals->insert({extract_ident(local), local_value});
+        ++sequence_nr;
         return 0;
     }
 }
@@ -301,6 +308,7 @@ int type_checker::validate_statement(astree* statement,
 int type_checker::validate_expression(astree* expression) {
     for(astree* child : expression->children) {
         int status;
+        const string* ident;
         switch(child->symbol) {
             case TOK_EQ:
             case TOK_NE:
@@ -349,8 +357,12 @@ int type_checker::validate_expression(astree* expression) {
                 child->attributes = child->first()->attributes;
                 break;
             case TOK_ALLOC:
+                status = validate_type_id(child->first(), child);
+                if(status != 0) return status;
                 break;
             case TOK_CALL:
+                status = validate_call(child);
+                if(status != 0) return status;
                 break;
             case TOK_INTCON:
             case TOK_STRINGCON:
@@ -360,6 +372,8 @@ int type_checker::validate_expression(astree* expression) {
                 break;
             case TOK_IDENT:
                 // get the type information
+                status = assign_type(child);
+                if(status != 0) return status;
                 break;
             default:
                 cerr << "ERROR: UNANTICIPATED SYMBOL: "
@@ -371,8 +385,9 @@ int type_checker::validate_expression(astree* expression) {
 }
 
 int type_checker::validate_type_id(astree* type_id) {
-    astree* type = type_id->first();
-    astree* identifier = type_id->second();
+    return validate_type_id(type_id->first(), type_id->second());
+}
+int type_checker::validate_type_id(astree* type, astree* identifier) {
     if(type->symbol == TOK_ARRAY) {
         identifier->attributes.set((size_t)attr::ARRAY);
         type = type->first();
@@ -413,6 +428,49 @@ int type_checker::validate_type_id(astree* type_id) {
     return 0;
 }
 
+int type_checker::validate_call(astree* call) {
+    const string* identifier = call->first()->lexinfo;
+    vector<astree*> params = call->second()->children;
+    if(globals->find(identifier) != globals->end()) {
+        symbol_value* function = globals->at(identifier);
+        if(params.size() != function->parameters.size()) {
+            cerr << "ERROR: incorrect number of arugments: "
+                 << *identifier << endl;
+            return -1;
+        }
+        for(size_t i = 0; i < params.size(); ++i) {
+            astree* param = params[i];
+            int status = assign_type(param);
+            if(status != 0) return status;
+            if(!types_equal(param, function->parameters[i])) {
+                cerr << "ERROR: incompatible type for argument: "
+                     << *(param->lexinfo) << endl;
+                return -1;
+            }
+        }
+        call->attributes = function->attributes;
+        return 0;
+    } else {
+        cerr << "ERROR: Invalid call to function: "
+             << *identifier << endl;
+        return -1;
+    }
+}
+
+int type_checker::assign_type(astree* ident) {
+    const string* id_str = ident->lexinfo;
+    if(locals->find(id_str) != locals->end()) {
+        ident->attributes = locals->at(id_str)->attributes;
+    } else if(globals->find(id_str) != globals->end()) {
+        ident->attributes = globals->at(id_str)->attributes;
+    } else {
+        cerr << "ERROR: could not resolve symbol: "
+             << *(ident->lexinfo) << endl;
+        return -1;
+    }
+    return 0;
+}
+
 bool type_checker::functions_equal(symbol_value* f1, symbol_value* f2) {
     if(f1->parameters.size() != f2->parameters.size())
         return false;
@@ -424,28 +482,36 @@ bool type_checker::functions_equal(symbol_value* f1, symbol_value* f2) {
 }
 
 bool type_checker::types_equal(symbol_value* v1, symbol_value* v2) {
-    if(v1->attributes.test((size_t)attr::ARRAY) !=
-            v2->attributes.test((size_t)attr::ARRAY)) {
+    return types_equal(v1->attributes, v2->attributes);
+}
+
+bool type_checker::types_equal(astree* t1, astree* t2) {
+    return types_equal(t1->attributes, t2->attributes);
+}
+
+bool type_checker::types_equal(astree* tree, symbol_value* entry) {
+    return types_equal(tree->attributes, entry->attributes);
+}
+
+bool type_checker::types_equal(attr_bitset a1, attr_bitset a2) {
+    if(a1.test((size_t)attr::ARRAY) !=
+            a2.test((size_t)attr::ARRAY)) {
         return false;
-    } else if(v1->attributes.test((size_t)attr::VOID) &&
-            v2->attributes.test((size_t)attr::VOID)) {
+    } else if(a1.test((size_t)attr::VOID) &&
+            a2.test((size_t)attr::VOID)) {
         return true;
-    } else if(v1->attributes.test((size_t)attr::STRUCT) &&
-            v2->attributes.test((size_t)attr::STRUCT)) {
+    } else if(a1.test((size_t)attr::STRUCT) &&
+            a2.test((size_t)attr::STRUCT)) {
         return true;
-    } else if(v1->attributes.test((size_t)attr::STRING) &&
-            v2->attributes.test((size_t)attr::STRING)) {
+    } else if(a1.test((size_t)attr::STRING) &&
+            a2.test((size_t)attr::STRING)) {
         return true;
-    } else if(v1->attributes.test((size_t)attr::INT) &&
-            v2->attributes.test((size_t)attr::INT)) {
+    } else if(a1.test((size_t)attr::INT) && 
+            a2.test((size_t)attr::INT)) {
         return true;
     } else {
         return false;
     }
-}
-
-bool type_checker::types_equal(astree* t1, astree* t2) {
-    return not ((t1->attributes ^ t2->attributes).any());
 }
 
 astree* type_checker::extract_param(astree* function, size_t index) {

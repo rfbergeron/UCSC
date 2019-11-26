@@ -47,9 +47,7 @@ struct symbol_value {
 
     // Functions
     symbol_value (astree* tree, size_t sequence_ = 0,
-            size_t block_nr_ = 0,
-            vector<symbol_value*> parameters_ = {},
-            symbol_table* fields_ = nullptr);
+            size_t block_nr_ = 0);
     ~symbol_value ();
 };
 
@@ -79,10 +77,15 @@ class type_checker {
         static int validate_block(astree*, const string*, size_t&);
         static int validate_statement(astree*, const string*, size_t&);
         static int validate_expression(astree*);
-        static int validate_type_id(astree*);
+        static int validate_type_id(astree* type_id);
+        static int validate_type_id(astree* type, astree* identifier);
+        static int validate_call(astree*);
+        static int assign_type(astree* ident);
         static bool functions_equal(symbol_value* f1, symbol_value* f2);
-        static bool types_equal(symbol_value* v1, symbol_value* v2);
-        static bool types_equal(astree* t1, astree* t2);
+        static bool types_equal(symbol_value*, symbol_value*);
+        static bool types_equal(astree*, astree*);
+        static bool types_equal(astree*, symbol_value*);
+        static bool types_equal(attr_bitset, attr_bitset);
         static astree* extract_param(astree* function, size_t index);
         static const string* extract_ident(astree* type_id);
         static attr get_type_attr(const symbol_value* symval);
