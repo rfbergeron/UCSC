@@ -1,7 +1,7 @@
 # Makefile, Author: Robert Bergeron, ID: rbergero
 
 CLASS = cse110a-wm.f19
-ASG = asg3
+ASG = asg4
 # Extremely picky compiler options
 WARN = -Wall -Wextra -Werror -Wpedantic -Wshadow -Wold-style-cast
 # full gcc exec command
