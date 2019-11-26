@@ -160,7 +160,7 @@ int type_checker::make_function_entry(astree* function) {
         cerr << "ERROR: Function " << *function_id
              << " has an array return type, which is not allowed!"
              << endl;
-        // TODO: keep going if we can
+        // TODO(rbergero): keep going if we can
         return -1;
     } else if(type_id->attributes.test((size_t)attr::STRUCT)) {
         if(type_names->find(function->type_id) == type_names->end()) {
@@ -181,7 +181,6 @@ int type_checker::make_function_entry(astree* function) {
         astree* param = params->children[i];
         const string* param_id_str = extract_ident(param);
         if(locals->find(param_id_str) != locals->end()) {
-        // TODO: add location of previous declaration
             cerr << "ERROR: Duplicate declaration of parameter: "
                  << *param_id_str << endl;
             return -1;
@@ -555,11 +554,14 @@ void type_checker::dump_symbols(ostream& out) {
     for(auto iter = globals->begin(); iter != globals->end(); ++iter) {
         out << *(iter->first) << " " << iter->second << endl;
         if(iter->second->attributes.test((size_t)attr::FUNCTION)) {
-            DEBUGH('s', "Dumping local declarations for block " << current_block_nr + 1);
+            DEBUGH('s', "Dumping local declarations for block "
+                    << current_block_nr + 1);
             symbol_table* locals = local_tables[current_block_nr];
-            for(auto liter = locals->begin(); liter != locals->end(); ++liter) {
+            for(auto liter = locals->begin(); liter != locals->end();
+                    ++liter) {
                 //if(liter->second->block_nr == current_block_nr) {
-                    out << "   " << *(liter->first) << " " << liter->second << endl;
+                    out << "   " << *(liter->first) << " "
+                        << liter->second << endl;
                 //}
             }
             ++current_block_nr;
@@ -584,7 +586,8 @@ void type_checker::destroy_tables() {
     for(auto local_iter = local_tables.begin(); local_iter !=
             local_tables.end(); ++local_iter) {
         symbol_table* locals = *local_iter;
-        for(auto iter = locals->begin(); iter != locals->end(); ++iter) {
+        for(auto iter = locals->begin(); iter != locals->end();
+                ++iter) {
             delete iter->second;
         }
         delete locals;

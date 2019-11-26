@@ -15,7 +15,8 @@ GMAKE = ${MAKE} --no-print-directory
 # name of the compiled executable
 EXECNAME = oc
 # .cpp source files
-CPPSRC = main.cpp auxlib.cpp string_set.cpp astree.cpp lyutils.cpp symtable.cpp
+CPPSRC = main.cpp auxlib.cpp string_set.cpp astree.cpp lyutils.cpp \
+		 symtable.cpp
 # .h header files
 HEADERS = auxlib.h string_set.h astree.h lyutils.h symtable.h
 # .gch header somethings?
@@ -50,7 +51,8 @@ yyparse.h yyparse.cpp : parser.y
       --output=yyparse.cpp parser.y
 
 rmtest :
-	rm -f *.oc *.str *.tok *.ast *.sym *.oil *.err *.out *.log *.lexyacctrace oclib.h octypes.h
+	rm -f *.oc *.str *.tok *.ast *.sym *.oil *.err *.out *.log \
+		*.lexyacctrace oclib.h octypes.h
 
 clean :
 	rm -f ${OBJECTS} ${GCH} ${DEPFILE} ${GENS} ${HEADERGENS} \
