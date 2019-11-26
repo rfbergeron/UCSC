@@ -31,14 +31,6 @@ ostream& operator<< (ostream& out, const attr& attribute) {
    return out << type_checker::attr_map.at(attribute);
 }
 
-/*ostream& operator<< (ostream&out, const attr_bitset& attributes) {
-    if(attributes.test(0)) out << static_cast<attr>(0);
-    for(size_t i = 1; i < (size_t)attr::BITSET_SIZE; ++i) {
-        if(attributes.test(i)) out << " " << static_cast<attr>(i);
-    }
-    return out;
-}*/
-
 ostream& operator<< (ostream& out, const symbol_value* symval) {
    out << symval->lloc << " {" << symval->block_nr << "}";
    for(size_t i = 1; i < (size_t)attr::BITSET_SIZE; ++i) {
@@ -81,18 +73,19 @@ int type_checker::make_symbol_table(astree* root) {
     int ret = 0;
     DEBUGH('t', "Making symbol table");
     for(astree* child : root->children) {
-        if(child->attributes.test((size_t)attr::FUNCTION)) {
-            // handle function definition
-            make_function_entry(child);
-        } else if(child->attributes.test((size_t)attr::VREG)) {
-            // handle global identifier declaration, with assignment
-        } else if(child->children[0]->lexinfo->compare("struct")) {
-            // handle structure definition
-            make_structure_entry(child);
-        } else {
-            // global identifier, no assignment. That's the only other
-            // thing the parser should be letting through at the top
-            make_global_entry(child);
+        switch(child->symbol) {
+            case TOK_FUNCTION:
+                make_function_entry(child);
+                break;
+            case TOK_STRUCT:
+                make_structure_entry(child);
+                break;
+            case TOK_IDENT:
+                make_global_entry(child);
+                break;
+            case '=':
+                // global entry with assignment
+                break;
         }
     }
     return ret;
@@ -196,6 +189,80 @@ int type_checker::make_function_entry(astree* function) {
     local_tables.push_back(locals);
     ++next_block;
     return 0;
+}
+
+int type_checker::make_local_entry(astree* local,
+        symbol_table* local_table) {
+    if(local_table->find(extract_ident(local)) != local_table->end()) {
+        //error; duplicate declaration
+        return -1;
+    } else {
+        local->attributes.set((size_t)attr::LVAL);
+        local->attributes.set((size_t)attr::VARIABLE);
+        symbol_value* local_value = new symbol_value(local);
+        local_table->insert({extract_ident(local), local_value});
+        return 0;
+    }
+}
+
+int type_checker::validate_block(astree* block,
+        const string* function_name) {
+    size_t sequence_nr = 0;
+    for(astree* statement : block->children) {
+        int status = validate_statement(statement, function_name,
+                sequence_nr);
+        if (status != 0) return status;
+    }
+    return 0;
+}
+
+int type_checker::validate_statement(astree* statement,
+        const string* function_name, size_t& sequence_nr) {
+    for(astree* child : statement->children) {
+        switch(child->symbol) {
+            case TOK_RETURN:
+                break;
+            case TOK_IDENT:
+                break;
+            case '=':
+                break;
+            case TOK_IF:
+                break;
+            case TOK_WHILE:
+                break;
+        }
+    }
+}
+
+int type_checker::validate_expression(astree* expression) {
+    for(astree* child : expression->children) {
+        switch(child->symbol) {
+            case TOK_EQ:
+            case TOK_NE:
+            case TOK_LE:
+            case TOK_GE:
+            case TOK_GT:
+            case TOK_LT:
+            case TOK_NOT:
+            case '+':
+            case '-':
+            case '*':
+            case '/':
+            case '=':
+            case '%':
+                // handle int exprs
+                break;
+            case TOK_ALLOC:
+                break;
+            case TOK_CALL:
+                break;
+            case TOK_INTCON:
+            case TOK_STRINGCON:
+            case TOK_NULLPTR:
+            case TOK_CHARCON:
+                break;
+        }
+    }
 }
 
 bool type_checker::functions_equal(symbol_value* f1, symbol_value* f2) {

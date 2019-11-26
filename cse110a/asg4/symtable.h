@@ -24,7 +24,6 @@ enum class attr : long unsigned int {
 
 using attr_bitset = bitset<static_cast<long unsigned int>(16)>;
 ostream& operator<< (ostream&, const attr&);
-//ostream& operator<< (ostream&, const attr_bitset&);
 
 enum class type_err {
     NODECL, REDECL, BADTYPE, NOARR, BADRET,
@@ -75,9 +74,9 @@ class type_checker {
         static int make_structure_entry(astree*);
         static int make_function_entry(astree*);
         static int make_global_entry(astree*);
-        static int make_local_entry(astree*);
-        static int validate_block(astree*);
-        static int validate_statement(astree*, const string*);
+        static int make_local_entry(astree*, symbol_table*);
+        static int validate_block(astree*, const string*);
+        static int validate_statement(astree*, const string*, size_t& sequence_nr);
         static int validate_expression(astree*);
         static bool functions_equal(symbol_value* f1, symbol_value* f2);
         static bool types_equal(symbol_value* v1, symbol_value* v2);
