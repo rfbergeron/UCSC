@@ -63,6 +63,8 @@ astree::astree (int symbol_, const location& loc_, const char* info):
         case TOK_GT:
         case TOK_GE:
         case TOK_NOT:
+        case TOK_POS:
+        case TOK_NEG:
             attributes.set((size_t)attr::INT);
         case '=':
         case TOK_ALLOC:
@@ -156,6 +158,18 @@ astree* astree::buddy_up (astree* sibling) {
          << "; oldest sib: " << parser::get_tname(firstborn->symbol)
          << " " << *(firstborn->lexinfo));
    return sibling;
+}
+
+astree* astree::first() {
+    return children[0];
+}
+
+astree* astree::second() {
+    return children[1];
+}
+
+astree* astree::third() {
+    return children[2];
 }
 
 void astree::dump_node (ostream& out) {

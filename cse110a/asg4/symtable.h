@@ -43,7 +43,7 @@ struct symbol_value {
     size_t block_nr = 0;
     vector<symbol_value*> parameters;
     const string* type_id = nullptr;
-    bool is_fn_declared = false;
+    bool has_block = false;
 
     // Functions
     symbol_value (astree* tree, size_t sequence_ = 0,
@@ -64,9 +64,10 @@ class type_checker {
 
         static symbol_table* type_names;
         static symbol_table* globals;
+        static symbol_table* locals;
         static vector<symbol_table*> local_tables;
         static const unordered_map<type_err,const string> type_errs;
-        static const attr_bitset TYPE_ATTR_MASK;
+        static attr_bitset TYPE_ATTR_MASK;
         static int next_block;
     public:
         static const unordered_map<attr,const string> attr_map;
@@ -74,12 +75,14 @@ class type_checker {
         static int make_structure_entry(astree*);
         static int make_function_entry(astree*);
         static int make_global_entry(astree*);
-        static int make_local_entry(astree*, symbol_table*);
-        static int validate_block(astree*, const string*);
-        static int validate_statement(astree*, const string*, size_t& sequence_nr);
+        static int make_local_entry(astree*, size_t&);
+        static int validate_block(astree*, const string*, size_t&);
+        static int validate_statement(astree*, const string*, size_t&);
         static int validate_expression(astree*);
+        static int validate_type_id(astree*);
         static bool functions_equal(symbol_value* f1, symbol_value* f2);
         static bool types_equal(symbol_value* v1, symbol_value* v2);
+        static bool types_equal(astree* t1, astree* t2);
         static astree* extract_param(astree* function, size_t index);
         static const string* extract_ident(astree* type_id);
         static attr get_type_attr(const symbol_value* symval);

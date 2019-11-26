@@ -48,6 +48,9 @@ struct astree {
          astree* child2 = nullptr);
    astree* adopt_attributes (astree* child);
    astree* buddy_up (astree* sibling);
+   astree* first();
+   astree* second();
+   astree* third();
    void dump_node (ostream&);
    void dump_tree (ostream&, int depth = 0);
    static void dump (ostream& out, astree* tree);

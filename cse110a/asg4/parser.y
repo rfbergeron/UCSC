@@ -137,8 +137,10 @@ expr        : expr '+' expr                  { $$ = $2->adopt($1, $3); }
             | expr '>' expr %prec TOK_GT     { $$ = $2->adopt_sym(
                                                TOK_GT, $1, $3); }
             | expr TOK_GE expr               { $$ = $2->adopt($1, $3); }
-            | '+' expr %prec TOK_POS         { $$ = $1->adopt($2); }
-            | '-' expr %prec TOK_NEG         { $$ = $1->adopt($2); }
+            | '+' expr %prec TOK_POS         { $$ = $1->adopt_sym(
+                                               TOK_POS, $2); }
+            | '-' expr %prec TOK_NEG         { $$ = $1->adopt_sym(
+                                               TOK_NEG, $2); }
             | TOK_NOT expr                   { $$ = $1->adopt($2); }
             | allocator                      { $$ = $1; }
             | call                           { $$ = $1; }
