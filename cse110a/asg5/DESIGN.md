@@ -36,6 +36,10 @@ their operands. The mathematical and comparison operators have their
 types automatically assigned; they just need the types of their
 operands checked.
 
+Every time we see a string constant, we should remember it by appending
+it to a list/vector, since we need to emit them in their own special
+block in the .oil file anyways.
+
 ### `make_symbol_table`
 Main loop. Doesn't do much on it's own, mostly passes off work to helper
 functions to make it a little nicer to look at and to help with naming.
@@ -86,6 +90,15 @@ if it sees a return statement.
 Validates an "expression" as defined in the bison source file. Once we have
 reached this point, we should not be recursively making calls to
 `validate_statement`, only to this function.
+
+### `sort_symtable`
+Takes as input a `symbol_table` to be sorted. Does a linear search through
+the `unordered_map`, which also means iterating over it's buckets, which may
+have multiple entries. Appends the value (a `symbol_value` pointer) to a
+`vector`. The function determines what the lowest token coordinate is by
+checking to see if the coordinate of the entry being examine is the current
+lowest entry AND that the entry being examined is not already an element of
+the `vector`.
 
 ## 1.3 `astree.h astree.cpp`
 The abstract syntax tree has changed slightly to accomodate the types
@@ -161,6 +174,19 @@ argument. Adopts the child node and returns itself.
 These files contain code for generating the intermediate language
 
 ### `class generator`
+Handles most if not all of the writing of the intermediate language file.
+Since declarations occur all in the same place, it will probably be easier
+to use the symtable to write out their definitions. The order is:
+structure definitons, then strings, then globals, then functions. Local
+declarations are all placed at the beginning of a function. The order
+these declarations occur in matters, so it might be worth it to write
+a function that sorts the symtable entries based on their token coordinate
+and returns them in a vector or something similar. Need std::find for this.
+
+The class will also hold static values which track the number of strings
+and branch statements that have been written in the current block, so
+that these values do not need to be passed as arguments in the related
+functions.
 
 ### `write_struct_def`
 Takes an entry in the symtable as input. Writes the structure definiton to
@@ -192,7 +218,9 @@ Takes a node of the astree which contains an alloc statement
 
 ### `write_expressions`
 Takes a node of the astree which contains an expression. Recursively calls
-itself, then writes the single statement for the current node. 
+itself, then writes the single statement for the current node. Needs to
+return some kind of indicator as to the nature of it's child calls; ie
+whether or not it needs to use a register or something. 
 
 ## 2 Pseudocode
 ```
@@ -217,5 +245,37 @@ int make_symbol_table(astree* root):
     endfor
     return ret
 
-int make_global_entry(astree* vardecl):
+vector<pair<const string*,symbol_value*>> sort_symtable(table):
+    ptr min_entry
+    val min_coord
+    vector<~> sorted
+    for bucket from 0 to bucket_count:
+        for itor in table[bucket]:
+            if itor->second()->coord < min_coord and itor not in sorted:
+                sorted.append(itor)
+            end
+        end
+    end
+end
+
+int write_int_lang(astree* root, structure, global, vector<> locals, vector<> strings):
+    sorted_structures = sort_symtable(structure);
+    for i from 0 to len(sorted_structures):
+        write_struct_def(sorted_structures[i])
+    end
+    for i from 0 to len(strings):
+        write_string_def(strings[i]
+    end
+    sorted_globals = sort_symtable(globals):
+    sorted_functions;
+    for i from 0 to len(sorted_globals):
+        if(sorted_globals[i] is a function):
+            append to sorted_functions
+        else
+            write_global_def(sorted_globals[i]);
+        end
+    end
+end
+
+
 ```
