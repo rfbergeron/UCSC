@@ -1,5 +1,7 @@
 #include <utility>
 #include <string>
+#include <vector>
+#include <unordered_map>
 
 #include "astree.h"
 #include "lyutils.h"
@@ -8,19 +10,22 @@
 #include "intlang.h"
 
 using symbol_pair = pair<const string*, symbol_value*>;
+using symbol_table = unordered_map<const string*,symbol_value*>;
+
 size_t generator::string_count = 0;
 size_t generator::branch_count = 0;
+ofstream& generator::out;
 
 int generator::write_int_lang(astree* root, symbol_table* structures,
         symbol_table* globals, vector<symbol_table*> locals,
         vector<string> strings) {
     vector<symbol_pair> sorted_structures =
             type_checker::sort_symtable(structures);
-    for(const auto& itor = sorted_structures.begin();
+    for(auto&& itor = sorted_structures.cbegin();
             itor != sorted_structures.end(); ++itor) {
         write_struct_decl(*itor);
     }
-    for(const auto& itor = strings.begin(); itor != strings.end();
+    for(auto&& itor = strings.cbegin(); itor != strings.end();
             ++itor) {
         write_string_decl(*itor);
     }
@@ -28,7 +33,7 @@ int generator::write_int_lang(astree* root, symbol_table* structures,
             type_checker::sort_symtable(globals);
     // probably unnecessary but since we're going over globals
     vector<symbol_pair> sorted_functions;
-    for(const auto& itor = sorted_globals.begin();
+    for(auto&& itor = sorted_globals.cbegin();
             itor != sorted_globals.end(); ++itor) {
         if(itor->second->has_attr(attr::FUNCTION))
             sorted_functions.push_back(*itor);
@@ -37,30 +42,38 @@ int generator::write_int_lang(astree* root, symbol_table* structures,
     }
 
     vector<astree*> statements = root->children;
-    for(const auto& itor = statements->cbegin();
-            itor != statements.cend(); ++itor)) {
-        if(*itor->has_attr(attr::FUNCTION)) {
-            size_t fn_block = *itor->second->block_nr - 1;
+    for(auto&& itor = statements.cbegin();
+            itor != statements.cend(); ++itor) {
+        if((*itor)->has_attr(attr::FUNCTION)) {
+            size_t fn_block = (*itor)->second()->block_nr - 1;
             write_function_decl(*itor, locals[fn_block]);
         }
     }
+    return 0;
 }
 
 int generator::write_var_decl(symbol_pair pair) {
     const string* id = pair.first;
     symbol_value* value = pair.second;
     if(value->has_attr(attr::LOCAL)) {
-        out << TAB << ".local " << write_type(value) << *(id) << endl;
+        out << TAB << ".local ";
+        write_type(value, out);
+        out << *(id) << endl;
     } else if(value->has_attr(attr::FIELD)) {
-        out << TAB << ".field " << write_type(value) << *(id) << endl;
+        out << TAB << ".field ";
+        write_type(value, out);
+        out << *(id) << endl;
     } else {
-        out << ".global " << write_type(value) << *(id) << endl;
+        out << ".global ";
+        write_type(value, out);
+        out << *(id) << endl;
     }
     return 0;
 }
 
 int generator::write_string_decl(string s) {
     out << ".string .s" << string_count++ << " \"" << s << "\"";
+    return 0;
 }
 
 int generator::write_struct_decl(symbol_pair pair) {
@@ -69,36 +82,39 @@ int generator::write_struct_decl(symbol_pair pair) {
     symbol_table* fields = value->fields;
     out << ".struct " << *(id) << endl;
     for(size_t bucket = 0; bucket < fields->bucket_count(); ++bucket) {
-        for(auto itor = fields->cbegin(bucket);
+        for(auto&& itor = fields->cbegin(bucket);
                 itor != fields->cend(bucket); ++itor) {
             write_var_decl(*itor);
         }
     }
     out << ".end" << endl;
+    return 0;
 }
 
 int generator::write_function_decl(astree* fun, symbol_table* locals) {
     // write function header (type, name, args, etc)
     astree* fun_name_node = fun->first()->second();
-    out << ".function " << write_type(fun_name_node, out)
-        << *(fun_name_node->lexinfo) << " (";
-    vector<astree*> params = fun->second->children;
+    out << ".function ";
+    write_type(fun_name_node, out);
+    out << *(fun_name_node->lexinfo) << " (";
+    vector<astree*> params = fun->second()->children;
     for(size_t i = 0; i < params.size(); ++i) {
         if(i > 0) out << ", ";
-        param_name_node = params[i]->second();
-        out << write_type(param_name_node, out)
-            << *(param_name_node->lexinfo);
+        astree* param_name_node = params[i]->second();
+        write_type(param_name_node, out);
+        out << *(param_name_node->lexinfo);
     }
     out << ")" << endl;
     // write the block
     vector<symbol_pair> sorted_locals =
             type_checker::sort_symtable(locals);
-    for(const auto& itor = sorted_locals.cbegin(); itor !=
+    for(auto&& itor = sorted_locals.cbegin(); itor !=
             sorted_locals.cend(); ++itor) {
         write_var_decl(*itor);
     }
     out << TAB << "return" << endl;
     out << ".end" << endl;
+    return 0;
 }
 
 /*int generator::write_alloc(astree* alloc, size_t branch, size_t reg) {
@@ -124,7 +140,8 @@ int generator::write_function_decl(astree* fun, symbol_table* locals) {
     return 0;
 }*/
 
-ofstream& generator::write_type(astree* tree, ofstream& out) {
+void generator::write_type(astree* tree, ostream& out) {
+    // i think this is the type for all arrays?
     if(tree->has_attr(attr::ARRAY)) {
         out << "void* ";
     } else if(tree->has_attr(attr::INT)) {
@@ -136,10 +153,9 @@ ofstream& generator::write_type(astree* tree, ofstream& out) {
     } else if(tree->has_attr(attr::STRING)) {
         out << "void* ";
     }
-    return out;
 }
 
-ofstream& generator::write_type(symbol_value* value, ofstream& out) {
+void generator::write_type(symbol_value* value, ostream& out) {
     // i think this is the type for all arrays?
     if(value->has_attr(attr::ARRAY)) {
         out << "void* ";
@@ -152,5 +168,4 @@ ofstream& generator::write_type(symbol_value* value, ofstream& out) {
     } else if(value->has_attr(attr::STRING)) {
         out << "void* ";
     }
-    return out;
 }
