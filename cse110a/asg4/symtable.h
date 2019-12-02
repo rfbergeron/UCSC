@@ -24,6 +24,7 @@ enum class attr : long unsigned int {
 
 using attr_bitset = bitset<static_cast<long unsigned int>(16)>;
 ostream& operator<< (ostream&, const attr&);
+ostream& operator<< (ostream&, const attr_bitset&);
 
 enum class type_err {
     NODECL, REDECL, BADTYPE, NOARR, BADRET,
@@ -65,8 +66,9 @@ class type_checker {
         static symbol_table* locals;
         static vector<symbol_table*> local_tables;
         static const unordered_map<type_err,const string> type_errs;
-        static attr_bitset TYPE_ATTR_MASK;
         static int next_block;
+        static const string DUMMY_FUNCTION;
+        static attr_bitset TYPE_ATTR_MASK;
     public:
         static const unordered_map<attr,const string> attr_map;
         static int make_symbol_table(astree*);
@@ -75,12 +77,12 @@ class type_checker {
         static int make_global_entry(astree*);
         static int make_local_entry(astree*, size_t&);
         static int validate_block(astree*, const string*, size_t&);
-        static int validate_statement(astree*, const string*, size_t&);
-        static int validate_expression(astree*);
+        static int validate_stmt_expr(astree* stmtexpr, const string* function_name, size_t& );
         static int validate_type_id(astree* type_id);
         static int validate_type_id(astree* type, astree* identifier);
         static int validate_call(astree*);
         static int assign_type(astree* ident);
+        static int assign_type(astree* ident, symbol_value* value);
         static bool functions_equal(symbol_value* f1, symbol_value* f2);
         static bool types_equal(symbol_value*, symbol_value*);
         static bool types_equal(astree*, astree*);

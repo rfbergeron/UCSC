@@ -25,7 +25,8 @@ ostream& operator<< (ostream& out, const astree* tree) {
    for(size_t i = 0; i < (size_t)attr::BITSET_SIZE; ++i) {
       if(tree->attributes.test(i)) {
          out << " " << static_cast<attr>(i);
-         if(i == static_cast<size_t>(attr::STRUCT))
+         if(i == static_cast<size_t>(attr::STRUCT) &&
+                 tree->type_id != nullptr)
             out << " " << *(tree->type_id);
       }
    }
@@ -33,6 +34,7 @@ ostream& operator<< (ostream& out, const astree* tree) {
    if(tree->symbol == TOK_IDENT) {
       out << " (loc here)";
    }
+
    return out;
 }
 
@@ -43,10 +45,9 @@ astree::astree (int symbol_, const location& loc_, const char* info):
     const char* tname = parser::get_tname(symbol_);
     switch(symbol_) {
         case TOK_VOID:
-            attributes.set((size_t)attr::VOID);
+            //attributes.set((size_t)attr::VOID);
             break;
         case TOK_FUNCTION:
-            attributes.set((size_t)attr::FUNCTION);
             break;
         case TOK_ARRAY:
             attributes.set((size_t)attr::ARRAY);
@@ -78,7 +79,7 @@ astree::astree (int symbol_, const location& loc_, const char* info):
             break;
         case TOK_STRUCT:
         case TOK_PTR:
-            attributes.set((size_t)attr::STRUCT);
+            //attributes.set((size_t)attr::STRUCT);
             break;
         case TOK_NULLPTR:
             attributes.set((size_t)attr::NULLPTR_T);
@@ -87,12 +88,10 @@ astree::astree (int symbol_, const location& loc_, const char* info):
         case TOK_INTCON:
         case TOK_CHARCON:
             attributes.set((size_t)attr::CONST);
-        case TOK_INT:
             attributes.set((size_t)attr::INT);
             break;
         case TOK_STRINGCON:
             attributes.set((size_t)attr::CONST);
-        case TOK_STRING:
             attributes.set((size_t)attr::STRING);
             break;
     }
@@ -139,10 +138,19 @@ astree* astree::adopt (astree* child1, astree* child2, astree* child3) {
 astree* astree::adopt_sym (int symbol_, astree* child1,
       astree* child2) {
    symbol = symbol_;
+   if(symbol_ == TOK_LT || symbol_ == TOK_GT) {
+      attributes.set((size_t)attr::INT);
+      attributes.set((size_t)attr::VREG);
+   } else if(symbol_ == TOK_INDEX) {
+      attributes.set((size_t)attr::VADDR);
+      attributes.set((size_t)attr::LVAL);
+   }
    return adopt (child1, child2);
 }
 
 astree* astree::buddy_up (astree* sibling) {
+   // if sib is null don't bother doing anything
+   if(sibling == nullptr) return this;
    // if it is the head of the list, this node points to itself
    sibling->firstborn = firstborn;
    next_sibling = sibling;

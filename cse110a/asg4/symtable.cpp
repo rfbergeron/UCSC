@@ -10,6 +10,7 @@ symbol_table* type_checker::globals = new symbol_table();
 symbol_table* type_checker::locals = nullptr;
 vector<symbol_table*> type_checker::local_tables;
 int type_checker::next_block = 1;
+const string type_checker::DUMMY_FUNCTION = "__DUMMY__";
 attr_bitset type_checker::TYPE_ATTR_MASK;
 const unordered_map<attr,const string> type_checker::attr_map= {
       {attr::VOID,      "void"     },
@@ -33,9 +34,19 @@ ostream& operator<< (ostream& out, const attr& attribute) {
    return out << type_checker::attr_map.at(attribute);
 }
 
+ostream& operator<< (ostream& out, const attr_bitset& attributes) {
+   if(attributes.test(0)) out << static_cast<attr>(0);
+   for(size_t i = 1; i < (size_t)attr::BITSET_SIZE; ++i) {
+      if(attributes.test(i)) {
+         out << " " << static_cast<attr>(i);
+      }
+   }
+   return out;
+}
+
 ostream& operator<< (ostream& out, const symbol_value* symval) {
    out << symval->lloc << " {" << symval->block_nr << "}";
-   for(size_t i = 1; i < (size_t)attr::BITSET_SIZE; ++i) {
+   for(size_t i = 0; i < (size_t)attr::BITSET_SIZE; ++i) {
       if(symval->attributes.test(i)) {
          if(i == (size_t)attr::STRUCT) {
             if(symval->fields == nullptr) {
@@ -58,7 +69,7 @@ ostream& operator<< (ostream& out, const symbol_value* symval) {
 symbol_value::symbol_value(astree* tree, size_t sequence_,
         size_t block_nr_):
         attributes(tree->attributes), lloc(tree->loc),
-        type_id(tree->lexinfo), sequence(sequence_),
+        type_id(tree->type_id), sequence(sequence_),
         block_nr(block_nr_) {
 }
 
@@ -79,6 +90,11 @@ int type_checker::make_symbol_table(astree* root) {
     DEBUGH('t', "Making symbol table");
     for(astree* child : root->children) {
         int status;
+        // validation method requires a sequence number but expressions
+        // as defined by the parser cannot have vardecls below them in
+        // the tree so we don't actually need to track sequence once we
+        // get down that far, even though much of the code is the same
+        size_t dummy_sequence = 0;
         switch(child->symbol) {
             case TOK_FUNCTION:
                 status = make_function_entry(child);
@@ -88,20 +104,24 @@ int type_checker::make_symbol_table(astree* root) {
                 status = make_structure_entry(child);
                 if(status != 0) return status;
                 break;
-            case TOK_IDENT:
+            case TOK_TYPE_ID:
                 status = make_global_entry(child);
                 if(status != 0) return status;
                 break;
             case '=':
                 status = make_global_entry(child->first());
                 if(status != 0) return status;
-                status = validate_expression(child->second());
+                status = validate_stmt_expr(child->second(),
+                        &DUMMY_FUNCTION, dummy_sequence);
                 if(status != 0) return status;
                 if(!types_equal(child->first(), child->second())) {
-                    cerr << "Incompatible types" << endl;
+                    cerr << "ERROR: Incompatible types for global"
+                         << endl;
                     return -1;
                 } else if(!child->first()->attributes.test(
                         (size_t)attr::LVAL)) {
+                    cerr << "ERROR: Global assignment destination"
+                         << " is not an LVAL" << endl;
                     return -1;
                 }
                 // type is the type of the left operand
@@ -124,13 +144,15 @@ int type_checker::make_global_entry(astree* global) {
              << *(extract_ident(global)) << endl;
         return -1;
     } else {
-        global->attributes.set((size_t)attr::LVAL);
-        global->attributes.set((size_t)attr::VARIABLE);
+        astree* type = global->first();
+        astree* identifier = global->second();
+        identifier->attributes.set((size_t)attr::LVAL);
+        identifier->attributes.set((size_t)attr::VARIABLE);
         int status = validate_type_id(global);
-        if(status != 0) return -1;
+        if(status != 0) return status;
         symbol_value* global_value = new struct symbol_value(
-                global->second());
-        globals->insert({extract_ident(global), global_value});
+                identifier);
+        globals->insert({identifier->lexinfo, global_value});
         return 0;
     }
 }
@@ -159,9 +181,13 @@ int type_checker::make_structure_entry(astree* structure) {
             } else {
                 int status = validate_type_id(field);
                 if(status != 0) return status;
+                field->second()->attributes.set((size_t)attr::FIELD);
+                field->second()->attributes.set((size_t)attr::LVAL);
                 symbol_value* field_value = new struct symbol_value(
                         field->second(), i-1);
-                fields->insert({field->lexinfo, field_value});
+                fields->insert({field->second()->lexinfo, field_value});
+                DEBUGH('t', "Field inserted at "
+                        << *(field->second()->lexinfo));
             }
         }
         structure_value->fields = fields;
@@ -173,11 +199,10 @@ int type_checker::make_function_entry(astree* function) {
     int ret = 0;
     int status;
     astree* type_id = function->first();
-    type_id->first()->attributes.set((size_t)attr::FUNCTION);
+    type_id->second()->attributes.set((size_t)attr::FUNCTION);
     const string* function_id = extract_ident(type_id);
     status = validate_type_id(type_id);
     if(status != 0) return status;
-    //DEBUGH('t', "Making entry for function: " << *function_id);
     if(type_id->attributes.test((size_t)attr::ARRAY)) {
         cerr << "ERROR: Function " << *function_id
              << " has an array return type, which is not allowed!"
@@ -195,7 +220,7 @@ int type_checker::make_function_entry(astree* function) {
     struct symbol_value* function_entry =
             new struct symbol_value(type_id->second());
     locals = new symbol_table();
-    // check and add parameters
+    // check and add parameters; set block
     set_block_nr(function->second(), next_block);
     astree* params = function->second();
     size_t param_sequence_nr = 0;
@@ -285,19 +310,22 @@ int type_checker::make_local_entry(astree* local, size_t& sequence_nr) {
 int type_checker::validate_block(astree* block,
         const string* function_name, size_t& sequence_nr) {
     for(astree* statement : block->children) {
-        int status = validate_statement(statement, function_name,
+        int status = validate_stmt_expr(statement, function_name,
                 sequence_nr);
         if (status != 0) return status;
     }
     return 0;
 }
 
-int type_checker::validate_statement(astree* statement,
+int type_checker::validate_stmt_expr(astree* statement,
         const string* function_name, size_t& sequence_nr) {
     int status;
     const string* ident;
-    symbol_value* function = globals->at(function_name);
+    symbol_value* function = function_name == &DUMMY_FUNCTION ?
+            nullptr : globals->at(function_name);
+    DEBUGH('t', "Validating next statement/expression");
     switch(statement->symbol) {
+        // trees generated my the "statement" production
         case TOK_RETURN:
             if(statement->children.empty()) {
                 if(!function->attributes.test(
@@ -308,18 +336,55 @@ int type_checker::validate_statement(astree* statement,
                     return -1;
                 }
             } else {
+                validate_stmt_expr(statement->first(), function_name,
+                        sequence_nr);
                 status = types_equal(statement->first(), function);
-                if(status != 0) return status;
+                if(status == 0) {
+                    cerr << "ERROR: Incompatible return type" << endl;
+
+                    return status;
+                }
             }  
             break;
         case TOK_TYPE_ID:
+            statement->first()->attributes.set((size_t)attr::LOCAL);
             status = make_local_entry(statement, sequence_nr);
             if(status != 0) return status;
             break;
-        case '=':
-            status = validate_expression(statement->first());
+        case TOK_IF:
+            status = validate_stmt_expr(statement->first(),
+                    function_name, sequence_nr);
             if(status != 0) return status;
-            status = validate_expression(statement->second());
+            status = validate_stmt_expr(statement->second(),
+                    function_name, sequence_nr);
+            if(status != 0) return status;
+            if(statement->children.size() == 3)
+            status = validate_stmt_expr(statement->third(),
+                    function_name, sequence_nr);
+            if(status != 0) return status;
+        break;
+        case TOK_WHILE:
+            status = validate_stmt_expr(statement->first(),
+                    function_name, sequence_nr);
+            if(status != 0) return status;
+            status = validate_stmt_expr(statement->second(),
+                    function_name, sequence_nr);
+            if(status != 0) return status;
+            break;
+        case TOK_BLOCK:
+            status = validate_block(statement, function_name,
+                    sequence_nr);
+            if(status != 0) return status;
+            break;
+        // gray area; vardecls (a statement) and assignments (an
+        // expression) can both have an '=' as their root but we handle
+        // them the same way
+        case '=':
+            status = validate_stmt_expr(statement->first(),
+                    function_name, sequence_nr);
+            if(status != 0) return status;
+            status = validate_stmt_expr(statement->second(),
+                    function_name, sequence_nr);
             if(status != 0) return status;
             if(!types_equal(statement->first(), statement->second())) {
                 cerr << "ERROR: Incompatible types for tokens: "
@@ -337,28 +402,7 @@ int type_checker::validate_statement(astree* statement,
                     << statement->first()->attributes);
             statement->attributes = statement->first()->attributes;
             break;
-        case TOK_IF:
-            status = validate_expression(statement->first());
-            if(status != 0) return status;
-            status = validate_statement(statement->second(),
-                    function_name, sequence_nr);
-        if(status != 0) return status;
-        if(statement->children.size() == 3)
-            status = validate_statement(statement->third(),
-                    function_name, sequence_nr);
-        if(status != 0) return status;
-        break;
-        case TOK_WHILE:
-            status = validate_expression(statement->first());
-            if(status != 0) return status;
-            status = validate_statement(statement->second(),
-                    function_name, sequence_nr);
-            if(status != 0) return status;
-            break;
-        case TOK_BLOCK:
-            status = validate_block(statement, function_name, sequence_nr);
-            if(status != 0) return status;
-            break;
+        // here begins the trees made by the "expr" production
         case TOK_EQ:
         case TOK_NE:
         case TOK_LE:
@@ -371,11 +415,15 @@ int type_checker::validate_statement(astree* statement,
         case '/':
         case '%':
             // handle int exprs
-            status = validate_expression(statement->first());
+            status = validate_stmt_expr(statement->first(),
+                    function_name, sequence_nr);
             if(status != 0) return status;
-            status = validate_expression(statement->second());
+            status = validate_stmt_expr(statement->second(),
+                    function_name, sequence_nr);
             if(status != 0) return status;
             if(!types_equal(statement->first(), statement->second())) {
+                cerr << "ERROR: Incompatible types for operator: "
+                     << statement->symbol << endl;
                 return -1;
             } else if(!statement->first()->attributes.test(
                 (size_t)attr::INT)) {
@@ -388,7 +436,8 @@ int type_checker::validate_statement(astree* statement,
         case TOK_POS:
         case TOK_NEG:
             // unary operators
-            status = validate_expression(statement->first());
+            status = validate_stmt_expr(statement->first(),
+                    function_name, sequence_nr);
             if(status != 0) return status;
             if(!statement->first()->attributes.test((size_t)attr::INT)) {
                 cerr << "ERROR: '" << *(statement->lexinfo)
@@ -404,6 +453,59 @@ int type_checker::validate_statement(astree* statement,
             status = validate_call(statement);
             if(status != 0) return status;
             break;
+        case TOK_INDEX:
+            // evaluate left and right side
+            // make sure left is an array and right is an int
+            // set type to type of array, minus the array
+            status = validate_stmt_expr(statement->first(),
+                    function_name, sequence_nr);
+            if(status != 0) return status;
+            status = validate_stmt_expr(statement->second(),
+                    function_name, sequence_nr);
+            if(status != 0) return status;
+            if(!(statement->first()->attributes.test((size_t)attr::
+                    ARRAY) && statement->second()->attributes.test(
+                    (size_t)attr::INT))) {
+                cerr << "ERROR: Incompatible types for indexing"
+                     << " operator" << endl;
+                return -1;
+            }
+            statement->attributes |= statement->first()->attributes;
+            statement->attributes.reset((size_t)attr::ARRAY);
+            break;
+        case TOK_ARROW:
+            // evaluate left but not right since right
+            // is always an ident
+            status = validate_stmt_expr(statement->first(),
+                    function_name, sequence_nr);
+            if(status != 0) return status;
+            if(statement->first()->attributes.test((size_t)attr::
+                    STRUCT) && type_names->find(
+                    statement->first()->type_id) != type_names->end()) {
+                // get struct def and check to make sure the field
+                // is in it,
+                symbol_value* struct_def = type_names->at(statement->
+                        first()->type_id);
+                if(struct_def->fields->find(statement->
+                        second()->lexinfo) != struct_def->fields->end()) {
+                    symbol_value* field_def = struct_def->fields->
+                            at(statement->second()->lexinfo);
+                    assign_type(statement->second(), field_def);
+                    assign_type(statement, field_def);
+                } else {
+                    cerr << "ERROR: field "
+                         << *(statement->second()->lexinfo)
+                         << " is not a member of structure"
+                         << endl;
+                    return -1;
+                }
+            } else {
+                cerr << "ERROR: structure " << *(statement->first()->type_id)
+                     << " not defined for token "
+                     << *(statement->first()->lexinfo) << endl;
+                return -1;
+            }
+            break;
         case TOK_INTCON:
         case TOK_STRINGCON:
         case TOK_NULLPTR:
@@ -411,96 +513,13 @@ int type_checker::validate_statement(astree* statement,
             // types are set on construction
             break;
         case TOK_IDENT:
-            // get the type information
             status = assign_type(statement);
             if(status != 0) return status;
             break;
         default:
-            cerr << "ERROR: UNEXPECTED TOKEN IN STATEMENT: "
+            cerr << "ERROR: UNEXPECTED TOKEN IN STATEMENT/EXPRESSION: "
                  << *(statement->lexinfo) << endl;
             return -1;
-    }
-    return 0;
-}
-
-int type_checker::validate_expression(astree* expression) {
-    for(astree* child : expression->children) {
-        int status;
-        const string* ident;
-        switch(child->symbol) {
-            case TOK_EQ:
-            case TOK_NE:
-            case TOK_LE:
-            case TOK_GE:
-            case TOK_GT:
-            case TOK_LT:
-            case '+':
-            case '-':
-            case '*':
-            case '/':
-            case '%':
-                // handle int exprs
-                status = validate_expression(child->first());
-                if(status != 0) return status;
-                status = validate_expression(child->second());
-                if(status != 0) return status;
-                if(!types_equal(child->first(), child->second())) {
-                    cerr << "ERROR: types are not compatible" << endl;
-                    return -1;
-                } else if(!child->first()->attributes.test(
-                        (size_t)attr::INT)) {
-                    cerr << "ERROR: arguments must be of type int"
-                         << endl;
-                    return -1;
-                }
-                break;
-            case TOK_NOT:
-            case TOK_POS:
-            case TOK_NEG:
-                // unary operators
-                status = validate_expression(child->first());
-                if(status != 0) return status;
-                if(!child->first()->attributes.test((size_t)attr::INT))
-                    return -1;
-            case '=':
-                // same as above but lhs must be an lval
-                status = validate_expression(child->first());
-                if(status != 0) return status;
-                status = validate_expression(child->second());
-                if(status != 0) return status;
-                if(!types_equal(child->first(), child->second())) {
-                    return -1;
-                } else if(!child->first()->attributes.test(
-                        (size_t)attr::LVAL)) {
-                    return -1;
-                }
-                // type is the type of the left operand
-                child->attributes = child->first()->attributes;
-                break;
-            case TOK_ALLOC:
-                status = validate_type_id(child->first(), child);
-                if(status != 0) return status;
-                break;
-            case TOK_CALL:
-                status = validate_call(child);
-                if(status != 0) return status;
-                break;
-            case TOK_INTCON:
-            case TOK_STRINGCON:
-            case TOK_NULLPTR:
-            case TOK_CHARCON:
-                // types are set on construction
-                break;
-            case TOK_IDENT:
-                // get the type information
-                status = assign_type(child);
-                if(status != 0) return status;
-                break;
-            default:
-                cerr << "ERROR: UNANTICIPATED SYMBOL: "
-                     << *(child->lexinfo) << endl;
-                return -1;
-        }
     }
     return 0;
 }
@@ -513,17 +532,21 @@ int type_checker::validate_type_id(astree* type, astree* identifier) {
     DEBUGH('t', "Validating typeid of symbol " <<
             *(identifier->lexinfo));
     if(type->symbol == TOK_ARRAY) {
+        DEBUGH('t', "Setting attribute ARRAY");
         identifier->attributes.set((size_t)attr::ARRAY);
         type = type->first();
     }
     switch(type->symbol) {
         case TOK_INT:
+            DEBUGH('t', "Setting attribute INT");
             identifier->attributes.set((size_t)attr::INT);
             break;
         case TOK_STRING:
+            DEBUGH('t', "Setting attribute STRING");
             identifier->attributes.set((size_t)attr::STRING);
             break;
         case TOK_PTR:
+            DEBUGH('t', "Setting attribute STRUCT");
             identifier->attributes.set((size_t)attr::STRUCT);
             type->first()->attributes.set((size_t)attr::TYPEID);
             identifier->type_id = type->first()->lexinfo;
@@ -535,11 +558,12 @@ int type_checker::validate_type_id(astree* type, astree* identifier) {
             }
             break;
         case TOK_VOID:
+            DEBUGH('t', "Setting attribute VOID");
             if(identifier->attributes.test((size_t)attr::ARRAY)) {
                 cerr << "ERROR: you may not have arrays of type void!"
                      << endl;
                 return -1;
-            } else if(identifier->attributes.test((size_t)attr::
+            } else if(!identifier->attributes.test((size_t)attr::
                     FUNCTION)) {
                 cerr << "ERROR: variables and fields cannot be of type "
                      << "void!" << endl;
@@ -555,18 +579,26 @@ int type_checker::validate_type_id(astree* type, astree* identifier) {
 
 int type_checker::validate_call(astree* call) {
     const string* identifier = call->first()->lexinfo;
-    vector<astree*> params = call->second()->children;
+    // params are at the same level as the id
+    vector<astree*> params = call->children;
     if(globals->find(identifier) != globals->end()) {
         symbol_value* function = globals->at(identifier);
-        if(params.size() != function->parameters.size()) {
+        if(params.size()-1 != function->parameters.size()) {
             cerr << "ERROR: incorrect number of arugments: "
                  << *identifier << endl;
             return -1;
         }
-        for(size_t i = 0; i < params.size(); ++i) {
-            astree* param = params[i];
-            int status = validate_expression(param);
+        DEBUGH('t', "Validating arguments for call to "
+                << *identifier << " num params: " << params.size()-1);
+        for(size_t i = 0; i < function->parameters.size(); ++i) {
+        DEBUGH('t', "Validating argument " << i);
+            astree* param = params[i+1];
+            size_t dummy_sequence = 0;
+            DEBUGH('t', "Argument was not null");
+            int status = validate_stmt_expr(param,
+                    &DUMMY_FUNCTION, dummy_sequence);
             if(status != 0) return status;
+            DEBUGH('t', "Comparing types");
             if(!types_equal(param, function->parameters[i])) {
                 cerr << "ERROR: incompatible type for argument: "
                      << *(param->lexinfo) << endl;
@@ -574,6 +606,7 @@ int type_checker::validate_call(astree* call) {
             }
         }
         call->attributes = function->attributes;
+        call->first()->attributes = function->attributes;
         return 0;
     } else {
         cerr << "ERROR: Invalid call to function: "
@@ -588,15 +621,23 @@ int type_checker::assign_type(astree* ident) {
     if(locals->find(id_str) != locals->end()) {
         DEBUGH('t', "Assigned " << *id_str << " a local value");
         ident->attributes = locals->at(id_str)->attributes;
+        ident->type_id = locals->at(id_str)->type_id;
     } else if(globals->find(id_str) != globals->end()) {
         DEBUGH('t', "Assigned " << *id_str << " a global value");
         ident->attributes = globals->at(id_str)->attributes;
+        ident->type_id = globals->at(id_str)->type_id;
     } else {
         cerr << "ERROR: could not resolve symbol: "
              << (ident->lexinfo) << " "
              << parser::get_tname(ident->symbol) << endl;
         return -1;
     }
+    return 0;
+}
+
+int type_checker::assign_type(astree* ident, symbol_value* value) {
+    DEBUGH('t', "Type has been found; assigning");
+    ident->attributes |= value->attributes;
     return 0;
 }
 
@@ -640,8 +681,10 @@ bool type_checker::types_equal(attr_bitset a1, attr_bitset a2) {
         return true;
     } else if(a1.test((size_t)attr::INT) && 
             a2.test((size_t)attr::INT)) {
+        DEBUGH('t', "OK: Both types int");
         return true;
     } else {
+        DEBUGH('t', "OOF");
         return false;
     }
 }

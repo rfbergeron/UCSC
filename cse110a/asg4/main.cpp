@@ -156,15 +156,15 @@ int main(int argc, char** argv) {
          // do type checking
          int typecheck_status = type_checker::
               make_symbol_table(parser::root);
-         if(typecheck_status == 0) {
+         //if(typecheck_status == 0) {
             string_set::dump(strfile);
             astree::print(astfile, parser::root, 0); 
             type_checker::dump_symbols(symfile);
             DEBUGH('y', "  all outputs dumped");
             type_checker::destroy_tables();
-         } else {
-            cerr << "Type checking failed" << endl;
-         }
+         //} else {
+         //   cerr << "Type checking failed" << endl;
+         //}
       }
       else {
         cerr << "Parsing failed with status " << parse_status << endl;  
