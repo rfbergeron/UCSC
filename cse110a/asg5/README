@@ -1,0 +1,25 @@
+# `oc` Symbols and Type Checking 
+### Robert Bergeron
+### ID: `rbergero`
+
+This program makes use of examples and utility files found
+in the util-code directory, namely:
+
+- auxlib.cpp
+- auxlib.h
+- string_set.cpp
+- string_set.h
+- lyutils.cpp
+- lyutils.h
+- astree.cpp
+- astree.h
+
+The main.cpp file also contains code from cppstrtok.cpp
+
+Some symbols have their type assigned in the astree constructor, which
+I hope is okay. Some of the assignments are unecessary or wrong, while
+others are for tokens which are guaranteed to have certain types, like
+constants and TOK_FUNCTION.
+
+Not functional as of this revision, but the majority of the code is
+there.
