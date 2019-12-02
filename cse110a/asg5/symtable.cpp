@@ -83,6 +83,10 @@ symbol_value::~symbol_value() {
     }
 }
 
+bool symbol_value::has_attr(attr attribute) {
+    return attributes.test((size_t)attribute);
+}
+
 int type_checker::make_symbol_table(astree* root) {
     TYPE_ATTR_MASK.set((size_t)attr::INT).set((size_t)attr::VOID)
             .set((size_t)attr::STRING).set((size_t)attr::NULLPTR_T)

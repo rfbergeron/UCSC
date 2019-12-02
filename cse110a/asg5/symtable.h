@@ -50,6 +50,7 @@ struct symbol_value {
     symbol_value (astree* tree, size_t sequence_ = 0,
             size_t block_nr_ = 0);
     ~symbol_value ();
+    bool has_attr(attr attribute);
 };
 
 ostream& operator<< (ostream&, const symbol_value*);
