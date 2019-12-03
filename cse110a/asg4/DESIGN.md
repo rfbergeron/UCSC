@@ -157,6 +157,43 @@ Takes one argument, an `astree*`, which should be one of this node's
 children. Takes the bitwise OR of the attributes of this node and the
 argument. Adopts the child node and returns itself.
 
+## 1.4 `intermediate.cpp intermediate.h`
+These files contain code for generating the intermediate language
+
+### `class generator`
+
+### `write_struct_def`
+Takes an entry in the symtable as input. Writes the structure definiton to
+the intermediate language file.
+
+### `write_global_def`
+Takes an entry in the global symtable as input. Writes the global definition
+to the intermediate language file.
+
+### `write_fun_def`
+Takes an entry in the astree that corresponds to a function definiton.
+
+### `write_string_def`
+Takes an entry in either the global or local symtable. Writes the definition
+of the string constant to the intermediate language file.
+
+### `write_local_def`
+Takes an entry in the local symtable. Writes the .locla declaration to the
+intermediate language file.
+
+### `write_branch_def`
+Takes a node of the astree which contains an if or while statement. If the
+conditional expression is a compound one, write the branching statements
+out before the actual condition itself. Then, write the th/el/fi or do/od
+blocks.
+
+### `write_alloc`
+Takes a node of the astree which contains an alloc statement
+
+### `write_expressions`
+Takes a node of the astree which contains an expression. Recursively calls
+itself, then writes the single statement for the current node. 
+
 ## 2 Pseudocode
 ```
 symbol_table type_names, globals, locals

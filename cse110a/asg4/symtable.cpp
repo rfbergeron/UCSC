@@ -450,6 +450,7 @@ int type_checker::validate_stmt_expr(astree* statement,
             if(status != 0) return status;
             break;
         case TOK_CALL:
+            statement->attributes.set((size_t)attr::VREG);
             status = validate_call(statement);
             if(status != 0) return status;
             break;
@@ -605,8 +606,8 @@ int type_checker::validate_call(astree* call) {
                 return -1;
             }
         }
-        call->attributes = function->attributes;
-        call->first()->attributes = function->attributes;
+        call->attributes |= function->attributes;
+        call->first()->attributes |= function->attributes;
         return 0;
     } else {
         cerr << "ERROR: Invalid call to function: "
@@ -638,6 +639,11 @@ int type_checker::assign_type(astree* ident) {
 int type_checker::assign_type(astree* ident, symbol_value* value) {
     DEBUGH('t', "Type has been found; assigning");
     ident->attributes |= value->attributes;
+    return 0;
+}
+
+int type_checker::assign_type(astree* dest, symbol_value* source) {
+    dest->attributes |= source->attributes;
     return 0;
 }
 

@@ -144,6 +144,8 @@ astree* astree::adopt_sym (int symbol_, astree* child1,
    } else if(symbol_ == TOK_INDEX) {
       attributes.set((size_t)attr::VADDR);
       attributes.set((size_t)attr::LVAL);
+   } else if(symbol_ == TOK_CALL) {
+      attributes.set((size_t)attr::VREG);
    }
    return adopt (child1, child2);
 }
@@ -179,6 +181,10 @@ void astree::dump_node (ostream& out) {
    for (const auto& child: children) {
       out << " " << static_cast<const void*> (child);
    }
+}
+
+bool astree::has_attr (attr attribute) {
+    return attributes.test((size_t)attribute);
 }
 
 void astree::dump_tree (ostream& out, int depth) {

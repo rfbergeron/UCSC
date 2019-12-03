@@ -77,12 +77,14 @@ class type_checker {
         static int make_global_entry(astree*);
         static int make_local_entry(astree*, size_t&);
         static int validate_block(astree*, const string*, size_t&);
-        static int validate_stmt_expr(astree* stmtexpr, const string* function_name, size_t& );
+        static int validate_stmt_expr(astree* stmtexpr,
+                const string* function_name, size_t& );
         static int validate_type_id(astree* type_id);
         static int validate_type_id(astree* type, astree* identifier);
         static int validate_call(astree*);
         static int assign_type(astree* ident);
         static int assign_type(astree* ident, symbol_value* value);
+        static int assign_type(astree* dest, astree* source);
         static bool functions_equal(symbol_value* f1, symbol_value* f2);
         static bool types_equal(symbol_value*, symbol_value*);
         static bool types_equal(astree*, astree*);
