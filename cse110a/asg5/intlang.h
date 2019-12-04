@@ -15,12 +15,12 @@ class generator {
     private:
         static size_t string_count;
         static size_t branch_count;
-        static ofstream& out;
+        static const string TAB;
+        static ofstream out;
     public:
         static void set_out(ostream& out);
         static int write_int_lang(astree* root,
-                symbol_table* structures, symbol_table* globals,
-                vector<symbol_table*> locals, vector<string> strings);
+                vector<symbol_table*> tables, vector<string> strings);
         static int write_var_decl(symbol_pair);
         static int write_string_decl(string);
         static int write_struct_decl(symbol_pair);

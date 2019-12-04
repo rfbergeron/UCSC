@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -73,6 +74,9 @@ class type_checker {
         static attr_bitset TYPE_ATTR_MASK;
     public:
         static const unordered_map<attr,const string> attr_map;
+        static vector<symbol_table*> get_tables();
+        static vector<string> get_string_constants();
+        static vector<symbol_entry> sort_symtable(symbol_table* table);
         static int make_symbol_table(astree*);
         static int make_structure_entry(astree*);
         static int make_function_entry(astree*);

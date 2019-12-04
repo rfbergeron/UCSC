@@ -9,17 +9,18 @@
 #include "auxlib.h"
 #include "intlang.h"
 
-using symbol_pair = pair<const string*, symbol_value*>;
 using symbol_table = unordered_map<const string*,symbol_value*>;
+using symbol_entry = symbol_table::value_type;
 
 size_t generator::string_count = 0;
 size_t generator::branch_count = 0;
-ofstream& generator::out;
+ofstream generator::out;
+const string generator::TAB = "          ";
 
 int generator::write_int_lang(astree* root,
         vector<symbol_table*> tables,
         vector<string> strings) {
-    vector<symbol_pair> sorted_structures =
+    vector<symbol_entry> sorted_structures =
             type_checker::sort_symtable(tables[tables.size()-1]);
     tables.pop_back();
     for(auto&& itor = sorted_structures.cbegin();
@@ -30,11 +31,11 @@ int generator::write_int_lang(astree* root,
             ++itor) {
         write_string_decl(*itor);
     }
-    vector<symbol_pair> sorted_globals =
+    vector<symbol_entry> sorted_globals =
             type_checker::sort_symtable(tables[tables.size()-1]);
     tables.pop_back();
     // probably unnecessary but since we're going over globals
-    vector<symbol_pair> sorted_functions;
+    vector<symbol_entry> sorted_functions;
     for(auto&& itor = sorted_globals.cbegin();
             itor != sorted_globals.end(); ++itor) {
         if(itor->second->has_attr(attr::FUNCTION))
@@ -54,7 +55,7 @@ int generator::write_int_lang(astree* root,
     return 0;
 }
 
-int generator::write_var_decl(symbol_pair pair) {
+int generator::write_var_decl(symbol_entry pair) {
     const string* id = pair.first;
     symbol_value* value = pair.second;
     if(value->has_attr(attr::LOCAL)) {
@@ -78,7 +79,7 @@ int generator::write_string_decl(string s) {
     return 0;
 }
 
-int generator::write_struct_decl(symbol_pair pair) {
+int generator::write_struct_decl(symbol_entry pair) {
     const string* id = pair.first;
     symbol_value* value = pair.second;
     symbol_table* fields = value->fields;
@@ -108,7 +109,7 @@ int generator::write_function_decl(astree* fun, symbol_table* locals) {
     }
     out << ")" << endl;
     // write the block
-    vector<symbol_pair> sorted_locals =
+    vector<symbol_entry> sorted_locals =
             type_checker::sort_symtable(locals);
     for(auto&& itor = sorted_locals.cbegin(); itor !=
             sorted_locals.cend(); ++itor) {

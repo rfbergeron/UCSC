@@ -4,6 +4,7 @@
 #include "auxlib.h"
 
 using symbol_table = unordered_map<const string*,symbol_value*>;
+using symbol_entry = symbol_table::value_type;
 using attr_bitset = bitset<static_cast<long unsigned int>(16)>;
 symbol_table* type_checker::type_names = new symbol_table();
 symbol_table* type_checker::globals = new symbol_table();
@@ -88,6 +89,39 @@ bool symbol_value::has_attr(attr attribute) {
     return attributes.test((size_t)attribute);
 }
 
+vector<symbol_table*> type_checker::get_tables() {
+    return local_tables;
+}
+
+vector<string> type_checker::get_string_constants() {
+    return string_constants;
+}
+
+vector<symbol_entry> type_checker::sort_symtable(symbol_table* table) {
+    vector<symbol_entry> sorted;
+    symbol_entry min_lloc = *(table->begin());
+    while(sorted.size() < table->size()) {
+        for(auto&& itor = table->begin(); itor != table->end(); ++itor) {
+            if(find(sorted.begin(), sorted.end(), *itor)
+                    != sorted.end())
+                continue;
+            if(itor->second->lloc.filenr < min_lloc.second->lloc.filenr) {
+                make_pair(itor->first, itor->second);
+            } else if(
+                    itor->second->lloc.filenr == min_lloc.second->lloc.filenr &&
+                    itor->second->lloc.linenr < min_lloc.second->lloc.linenr) {
+                make_pair(itor->first, itor->second);
+            } else if(
+                    itor->second->lloc.filenr == min_lloc.second->lloc.filenr &&
+                    itor->second->lloc.linenr == min_lloc.second->lloc.linenr &&
+                    itor->second->lloc.offset <= min_lloc.second->lloc.offset) {
+                make_pair(itor->first, itor->second);
+            }
+        }
+        sorted.push_back(min_lloc);
+    }
+    return sorted;
+}
 int type_checker::make_symbol_table(astree* root) {
     TYPE_ATTR_MASK.set((size_t)attr::INT).set((size_t)attr::VOID)
             .set((size_t)attr::STRING).set((size_t)attr::NULLPTR_T)
@@ -139,6 +173,8 @@ int type_checker::make_symbol_table(astree* root) {
                 return -1;
         }
     }
+    local_tables.push_back(globals);
+    local_tables.push_back(type_names);
     return 0;
 }
 
