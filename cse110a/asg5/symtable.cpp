@@ -9,6 +9,7 @@ symbol_table* type_checker::type_names = new symbol_table();
 symbol_table* type_checker::globals = new symbol_table();
 symbol_table* type_checker::locals = nullptr;
 vector<symbol_table*> type_checker::local_tables;
+vector<string> type_checker::string_constants;
 int type_checker::next_block = 1;
 const string type_checker::DUMMY_FUNCTION = "__DUMMY__";
 attr_bitset type_checker::TYPE_ATTR_MASK;
@@ -512,10 +513,14 @@ int type_checker::validate_stmt_expr(astree* statement,
             }
             break;
         case TOK_INTCON:
-        case TOK_STRINGCON:
         case TOK_NULLPTR:
         case TOK_CHARCON:
-            // types are set on construction
+            // types are set on construction and we don't need to do
+            // anything else
+            break;
+        case TOK_STRINGCON:
+            // save for intlang
+            string_constants.push_back(*(statement->lexinfo));
             break;
         case TOK_IDENT:
             status = assign_type(statement);

@@ -16,11 +16,12 @@ size_t generator::string_count = 0;
 size_t generator::branch_count = 0;
 ofstream& generator::out;
 
-int generator::write_int_lang(astree* root, symbol_table* structures,
-        symbol_table* globals, vector<symbol_table*> locals,
+int generator::write_int_lang(astree* root,
+        vector<symbol_table*> tables,
         vector<string> strings) {
     vector<symbol_pair> sorted_structures =
-            type_checker::sort_symtable(structures);
+            type_checker::sort_symtable(tables[tables.size()-1]);
+    tables.pop_back();
     for(auto&& itor = sorted_structures.cbegin();
             itor != sorted_structures.end(); ++itor) {
         write_struct_decl(*itor);
@@ -30,7 +31,8 @@ int generator::write_int_lang(astree* root, symbol_table* structures,
         write_string_decl(*itor);
     }
     vector<symbol_pair> sorted_globals =
-            type_checker::sort_symtable(globals);
+            type_checker::sort_symtable(tables[tables.size()-1]);
+    tables.pop_back();
     // probably unnecessary but since we're going over globals
     vector<symbol_pair> sorted_functions;
     for(auto&& itor = sorted_globals.cbegin();
@@ -46,7 +48,7 @@ int generator::write_int_lang(astree* root, symbol_table* structures,
             itor != statements.cend(); ++itor) {
         if((*itor)->has_attr(attr::FUNCTION)) {
             size_t fn_block = (*itor)->second()->block_nr - 1;
-            write_function_decl(*itor, locals[fn_block]);
+            write_function_decl(*itor, tables[fn_block]);
         }
     }
     return 0;

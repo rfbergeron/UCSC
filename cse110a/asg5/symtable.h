@@ -66,6 +66,7 @@ class type_checker {
         static symbol_table* globals;
         static symbol_table* locals;
         static vector<symbol_table*> local_tables;
+        static vector<string> string_constants;
         static const unordered_map<type_err,const string> type_errs;
         static int next_block;
         static const string DUMMY_FUNCTION;
