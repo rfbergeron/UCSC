@@ -177,6 +177,10 @@ bool astree::has_attr (attr attribute) {
     return attributes.test((size_t)attribute);
 }
 
+void astree::set_attr (attr attribute) {
+    attributes.set((size_t) attribute);
+}
+
 void astree::dump_tree (ostream& out, int depth) {
    out << setw (depth * 3) << "";
    dump_node (out);

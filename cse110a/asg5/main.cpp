@@ -15,6 +15,7 @@
 #include "astree.h"
 #include "symtable.h"
 #include "yyparse.h"
+#include "intlang.h"
 
 const string CPP = "/usr/bin/cpp";
 const string OC_EXT = ".oc";
@@ -22,12 +23,14 @@ const string STR_EXT = ".str";
 const string TOK_EXT = ".tok";
 const string AST_EXT = ".ast";
 const string SYM_EXT = ".sym";
+const string OIL_EXT = ".oil";
 constexpr size_t LINESIZE = 1024;
 string cpp_opts = " -nostdinc";
 ofstream strfile;
 ofstream tokfile;
 ofstream astfile;
 ofstream symfile;
+ofstream oilfile;
 
 // Print the meaning of a signal.
 static string sig_text (int signal) {
@@ -113,34 +116,42 @@ int main(int argc, char** argv) {
    string tok_name = base_name + TOK_EXT;
    string ast_name = base_name + AST_EXT;
    string sym_name = base_name + SYM_EXT;
+   string oil_name = base_name + OIL_EXT;
 
    strfile.open(str_name.c_str());
    if((strfile.rdstate() & ofstream::failbit) != 0) {
       cerr << "failed to open file for writing: "
-            << str_name << endl;
+           << str_name << endl;
       return EXIT_FAILURE;
    }
 
    tokfile.open(tok_name.c_str());
    if((tokfile.rdstate() & ofstream::failbit) != 0) {
       cerr << "failed to open file for writing: "
-            << tok_name << endl;
+           << tok_name << endl;
       return EXIT_FAILURE;
    }
 
    astfile.open(ast_name.c_str());
    if((astfile.rdstate() & ofstream::failbit) != 0) {
       cerr << "failed to open file for writing: "
-            << ast_name << endl;
+           << ast_name << endl;
       return EXIT_FAILURE;
    }
 
    symfile.open(sym_name.c_str());
    if((symfile.rdstate() & ofstream::failbit) != 0) {
       cerr << "failed to open file for writing: "
-            << sym_name << endl;
+           << sym_name << endl;
       return EXIT_FAILURE;
    }
+
+   oilfile.open(oil_name.c_str());
+   if((symfile.rdstate() & ofstream::failbit) != 0) {
+       cerr << "Failed to pen file for writing: "
+            << sym_name << endl;
+       return EXIT_FAILURE;
+    }
 
    string command = CPP + cpp_opts + " " + oc_name;
    yyin = popen(command.c_str(), "r");
@@ -160,6 +171,10 @@ int main(int argc, char** argv) {
             string_set::dump(strfile);
             astree::print(astfile, parser::root, 0); 
             type_checker::dump_symbols(symfile);
+            //generator::set_out(oilfile);
+            generator::write_int_lang(parser::root,
+                    type_checker::get_tables(),
+                    type_checker::get_string_constants());
             DEBUGH('y', "  all outputs dumped");
             type_checker::destroy_tables();
          //} else {

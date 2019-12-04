@@ -52,6 +52,7 @@ struct symbol_value {
             size_t block_nr_ = 0);
     ~symbol_value ();
     bool has_attr(attr attribute);
+    void set_attr(attr attribute);
 };
 
 ostream& operator<< (ostream&, const symbol_value*);
@@ -66,7 +67,7 @@ class type_checker {
         static symbol_table* type_names;
         static symbol_table* globals;
         static symbol_table* locals;
-        static vector<symbol_table*> local_tables;
+        static vector<symbol_table*> tables;
         static vector<string> string_constants;
         static const unordered_map<type_err,const string> type_errs;
         static int next_block;

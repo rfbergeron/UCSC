@@ -51,6 +51,7 @@ struct astree {
    astree* second();
    astree* third();
    bool has_attr(attr attribute);
+   void set_attr(attr attribute);
    void dump_node (ostream&);
    void dump_tree (ostream&, int depth = 0);
    static void dump (ostream& out, astree* tree);

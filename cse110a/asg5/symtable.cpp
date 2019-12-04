@@ -9,7 +9,7 @@ using attr_bitset = bitset<static_cast<long unsigned int>(16)>;
 symbol_table* type_checker::type_names = new symbol_table();
 symbol_table* type_checker::globals = new symbol_table();
 symbol_table* type_checker::locals = nullptr;
-vector<symbol_table*> type_checker::local_tables;
+vector<symbol_table*> type_checker::tables;
 vector<string> type_checker::string_constants;
 int type_checker::next_block = 1;
 const string type_checker::DUMMY_FUNCTION = "__DUMMY__";
@@ -89,8 +89,12 @@ bool symbol_value::has_attr(attr attribute) {
     return attributes.test((size_t)attribute);
 }
 
+void symbol_value::set_attr(attr attribute) {
+    attributes.set((size_t)attribute);
+}
+
 vector<symbol_table*> type_checker::get_tables() {
-    return local_tables;
+    return tables;
 }
 
 vector<string> type_checker::get_string_constants() {
@@ -101,27 +105,28 @@ vector<symbol_entry> type_checker::sort_symtable(symbol_table* table) {
     vector<symbol_entry> sorted;
     symbol_entry min_lloc = *(table->begin());
     while(sorted.size() < table->size()) {
-        for(auto&& itor = table->begin(); itor != table->end(); ++itor) {
-            if(find(sorted.begin(), sorted.end(), *itor)
+        for(const auto & entry : *table) {
+            if(find(sorted.begin(), sorted.end(), entry)
                     != sorted.end())
                 continue;
-            if(itor->second->lloc.filenr < min_lloc.second->lloc.filenr) {
-                make_pair(itor->first, itor->second);
+            if(entry.second->lloc.filenr < min_lloc.second->lloc.filenr) {
+                make_pair(entry.first, entry.second);
             } else if(
-                    itor->second->lloc.filenr == min_lloc.second->lloc.filenr &&
-                    itor->second->lloc.linenr < min_lloc.second->lloc.linenr) {
-                make_pair(itor->first, itor->second);
+                    entry.second->lloc.filenr == min_lloc.second->lloc.filenr &&
+                    entry.second->lloc.linenr < min_lloc.second->lloc.linenr) {
+                make_pair(entry.first, entry.second);
             } else if(
-                    itor->second->lloc.filenr == min_lloc.second->lloc.filenr &&
-                    itor->second->lloc.linenr == min_lloc.second->lloc.linenr &&
-                    itor->second->lloc.offset <= min_lloc.second->lloc.offset) {
-                make_pair(itor->first, itor->second);
+                    entry.second->lloc.filenr == min_lloc.second->lloc.filenr &&
+                    entry.second->lloc.linenr == min_lloc.second->lloc.linenr &&
+                    entry.second->lloc.offset <= min_lloc.second->lloc.offset) {
+                make_pair(entry.first, entry.second);
             }
         }
         sorted.push_back(min_lloc);
     }
     return sorted;
 }
+
 int type_checker::make_symbol_table(astree* root) {
     TYPE_ATTR_MASK.set((size_t)attr::INT).set((size_t)attr::VOID)
             .set((size_t)attr::STRING).set((size_t)attr::NULLPTR_T)
@@ -173,8 +178,9 @@ int type_checker::make_symbol_table(astree* root) {
                 return -1;
         }
     }
-    local_tables.push_back(globals);
-    local_tables.push_back(type_names);
+    // use local table list to group all tables together
+    tables.push_back(globals);
+    tables.push_back(type_names);
     return 0;
 }
 
@@ -191,6 +197,18 @@ int type_checker::make_global_entry(astree* global) {
         identifier->attributes.set((size_t)attr::VARIABLE);
         int status = validate_type_id(global);
         if(status != 0) return status;
+        if(global->children.size() == 3) {
+            size_t dummy_sequence = 0;
+            status = validate_stmt_expr(global->third(),
+                    &DUMMY_FUNCTION, dummy_sequence);
+            if(status != 0) return status;
+            if(!types_equal(global->third(), global->second())) {
+                cerr << "ERROR: Incompatible type for global variable"
+                     << endl;
+                return -1;
+            }
+        }
+        
         symbol_value* global_value = new struct symbol_value(
                 identifier);
         globals->insert({identifier->lexinfo, global_value});
@@ -320,7 +338,7 @@ int type_checker::make_function_entry(astree* function) {
         }
     }
 
-    local_tables.push_back(locals);
+    tables.push_back(locals);
     locals = nullptr;
     ++next_block;
     return 0;
@@ -340,6 +358,20 @@ int type_checker::make_local_entry(astree* local, size_t& sequence_nr) {
         identifier->attributes.set((size_t)attr::VARIABLE);
         int status = validate_type_id(local);
         if(status != 0) return status;
+        DEBUGH('t', "Checking to see if var has an initial value");
+        if(local->children.size() == 3) {
+            size_t dummy_sequence = 0;
+            DEBUGH('t', "it do have value");
+            status = validate_stmt_expr(local->third(),
+                    &DUMMY_FUNCTION, dummy_sequence);
+            if(status != 0) return status;
+            if(!types_equal(local->third(), local->second())) {
+                cerr << "ERROR: Incompatible type for local variable"
+                     << endl;
+                return -1;
+            }
+        }
+        
         symbol_value* local_value = new struct 
                 symbol_value(local->second(), sequence_nr, next_block);
         locals->insert({identifier->lexinfo, local_value});
@@ -388,7 +420,8 @@ int type_checker::validate_stmt_expr(astree* statement,
             }  
             break;
         case TOK_TYPE_ID:
-            statement->first()->attributes.set((size_t)attr::LOCAL);
+            statement->second()->attributes
+                .set((size_t)attr::LOCAL);
             status = make_local_entry(statement, sequence_nr);
             if(status != 0) return status;
             break;
@@ -489,6 +522,17 @@ int type_checker::validate_stmt_expr(astree* statement,
         case TOK_ALLOC:
             status = validate_type_id(statement->first(), statement);
             if(status != 0) return status;
+            if(statement->children.size() == 2) {
+                status = validate_stmt_expr(statement->second(),
+                        function_name, sequence_nr);
+                if(status != 0) return status;
+                if(!statement->second()->has_attr(attr::INT) ||
+                        statement->second()->has_attr(attr::ARRAY)) {
+                    cerr << "ERROR: alloc size argument must be of"
+                         << " type int!" << endl;
+                    return -1;
+                }
+            }
             break;
         case TOK_CALL:
             statement->attributes.set((size_t)attr::VREG);
@@ -618,6 +662,17 @@ int type_checker::validate_type_id(astree* type, astree* identifier) {
                 identifier->attributes.set((size_t)attr::VOID);
             }
             break;
+        case TOK_IDENT:
+            DEBUGH('t', "Type is pointer; resolving");
+            identifier->set_attr(attr::STRUCT);
+            identifier->type_id = type->lexinfo;
+            type->set_attr(attr::TYPEID);
+            if(type_names->find(identifier->type_id) ==
+                    type_names->end()) {
+                cerr << "ERROR: Type not declared: "
+                     << *(identifier->type_id) << endl;
+                return -1;
+            }
     }
     DEBUGH('t', "id now has attributes: " << identifier->attributes);
     return 0;
@@ -783,7 +838,7 @@ void type_checker::dump_symbols(ostream& out) {
         if(iter->second->attributes.test((size_t)attr::FUNCTION)) {
             DEBUGH('s', "Dumping local declarations for block "
                     << current_block_nr + 1);
-            symbol_table* locals = local_tables[current_block_nr];
+            symbol_table* locals = tables[current_block_nr];
             for(auto liter = locals->begin(); liter != locals->end();
                     ++liter) {
                 //if(liter->second->block_nr == current_block_nr) {
@@ -798,20 +853,9 @@ void type_checker::dump_symbols(ostream& out) {
 }
 
 void type_checker::destroy_tables() {
-    DEBUGH('t', "  DESTROYING TYPE NAME SYMTABLE");
-    for(auto iter = type_names->begin(); iter != type_names->end();
-            ++iter) {
-        delete iter->second;
-    }
-    delete type_names;
-    DEBUGH('t', "  DESTROYING GLOBAL SYMTABLE");
-    for(auto iter = globals->begin(); iter != globals->end(); ++iter) {
-        delete iter->second;
-    }
-    delete globals;
-    DEBUGH('t', "  DESTROYING LOCAL SYMTABLES");
-    for(auto local_iter = local_tables.begin(); local_iter !=
-            local_tables.end(); ++local_iter) {
+    DEBUGH('t', "  DESTROYING SYMTABLES");
+    for(auto local_iter = tables.begin(); local_iter !=
+            tables.end(); ++local_iter) {
         symbol_table* locals = *local_iter;
         for(auto iter = locals->begin(); iter != locals->end();
                 ++iter) {

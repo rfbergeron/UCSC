@@ -14,8 +14,12 @@ using symbol_entry = symbol_table::value_type;
 
 size_t generator::string_count = 0;
 size_t generator::branch_count = 0;
-ofstream generator::out;
+ostream* generator::out = &cout;
 const string generator::TAB = "          ";
+
+void generator::set_out(ostream out_) {
+    out = &out_;
+}
 
 int generator::write_int_lang(astree* root,
         vector<symbol_table*> tables,
@@ -59,23 +63,23 @@ int generator::write_var_decl(symbol_entry pair) {
     const string* id = pair.first;
     symbol_value* value = pair.second;
     if(value->has_attr(attr::LOCAL)) {
-        out << TAB << ".local ";
-        write_type(value, out);
-        out << *(id) << endl;
+        *out << TAB << ".local ";
+        write_type(value);
+        *out << *(id) << endl;
     } else if(value->has_attr(attr::FIELD)) {
-        out << TAB << ".field ";
-        write_type(value, out);
-        out << *(id) << endl;
+        *out << TAB << ".field ";
+        write_type(value);
+        *out << *(id) << endl;
     } else {
-        out << ".global ";
-        write_type(value, out);
-        out << *(id) << endl;
+        *out << ".global ";
+        write_type(value);
+        *out << *(id) << endl;
     }
     return 0;
 }
 
 int generator::write_string_decl(string s) {
-    out << ".string .s" << string_count++ << " \"" << s << "\"";
+    *out << ".string .s" << string_count++ << " \"" << s << "\"";
     return 0;
 }
 
@@ -83,31 +87,31 @@ int generator::write_struct_decl(symbol_entry pair) {
     const string* id = pair.first;
     symbol_value* value = pair.second;
     symbol_table* fields = value->fields;
-    out << ".struct " << *(id) << endl;
+    *out << ".struct " << *(id) << endl;
     for(size_t bucket = 0; bucket < fields->bucket_count(); ++bucket) {
         for(auto&& itor = fields->cbegin(bucket);
                 itor != fields->cend(bucket); ++itor) {
             write_var_decl(*itor);
         }
     }
-    out << ".end" << endl;
+    *out << ".end" << endl;
     return 0;
 }
 
 int generator::write_function_decl(astree* fun, symbol_table* locals) {
     // write function header (type, name, args, etc)
     astree* fun_name_node = fun->first()->second();
-    out << ".function ";
-    write_type(fun_name_node, out);
-    out << *(fun_name_node->lexinfo) << " (";
+    *out << ".function ";
+    write_type(fun_name_node);
+    *out << *(fun_name_node->lexinfo) << " (";
     vector<astree*> params = fun->second()->children;
     for(size_t i = 0; i < params.size(); ++i) {
-        if(i > 0) out << ", ";
+        if(i > 0) *out << ", ";
         astree* param_name_node = params[i]->second();
-        write_type(param_name_node, out);
-        out << *(param_name_node->lexinfo);
+        write_type(param_name_node);
+        *out << *(param_name_node->lexinfo);
     }
-    out << ")" << endl;
+    *out << ")" << endl;
     // write the block
     vector<symbol_entry> sorted_locals =
             type_checker::sort_symtable(locals);
@@ -115,8 +119,8 @@ int generator::write_function_decl(astree* fun, symbol_table* locals) {
             sorted_locals.cend(); ++itor) {
         write_var_decl(*itor);
     }
-    out << TAB << "return" << endl;
-    out << ".end" << endl;
+    *out << TAB << "return" << endl;
+    *out << ".end" << endl;
     return 0;
 }
 
@@ -143,32 +147,32 @@ int generator::write_function_decl(astree* fun, symbol_table* locals) {
     return 0;
 }*/
 
-void generator::write_type(astree* tree, ostream& out) {
+void generator::write_type(astree* tree) {
     // i think this is the type for all arrays?
     if(tree->has_attr(attr::ARRAY)) {
-        out << "void* ";
+        *out << "void* ";
     } else if(tree->has_attr(attr::INT)) {
-        out << "int ";
+        *out << "int ";
     } else if(tree->has_attr(attr::VOID)) {
-        out << " ";
+        *out << " ";
     } else if(tree->has_attr(attr::STRUCT)) {
-        out << "struct " << tree->type_id << " ";
+        *out << "struct " << tree->type_id << " ";
     } else if(tree->has_attr(attr::STRING)) {
-        out << "void* ";
+        *out << "void* ";
     }
 }
 
-void generator::write_type(symbol_value* value, ostream& out) {
+void generator::write_type(symbol_value* value) {
     // i think this is the type for all arrays?
     if(value->has_attr(attr::ARRAY)) {
-        out << "void* ";
+        *out << "void* ";
     } else if(value->has_attr(attr::INT)) {
-        out << "int ";
+        *out << "int ";
     } else if(value->has_attr(attr::VOID)) {
-        out << " ";
+        *out << " ";
     } else if(value->has_attr(attr::STRUCT)) {
-        out << "struct " << value->type_id << " ";
+        *out << "struct " << value->type_id << " ";
     } else if(value->has_attr(attr::STRING)) {
-        out << "void* ";
+        *out << "void* ";
     }
 }
