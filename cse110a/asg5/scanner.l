@@ -35,6 +35,8 @@ HEXCON          (0[xX]{HEXDIGIT}+)
 INTCON          ({DECCON}|{OCTCON}|{HEXCON})
 CHARCON         ('([^\\'\n]|\\[\\'"0nt])')
 STRINGCON       (\"([^\\"\n]|\\[\\'"0nt])*\")
+NOTCHAR         ('[^']*)
+NOTSTRING       (\"[^"]*)
 %%
 
 "#".*\n         { lexer::include(); lexer::newline(); }
@@ -69,6 +71,7 @@ STRINGCON       (\"([^\\"\n]|\\[\\'"0nt])*\")
 "-"             { return lexer::token ('-'); }
 "*"             { return lexer::token ('*'); }
 "/"             { return lexer::token ('/'); }
+"%"             { return lexer::token ('%'); }
 "^"             { return lexer::token ('^'); }
 "("             { return lexer::token ('('); }
 ")"             { return lexer::token (')'); }
@@ -82,6 +85,8 @@ STRINGCON       (\"([^\\"\n]|\\[\\'"0nt])*\")
 ">"             { return lexer::token ('>'); }
 
 {NOTNUMBER}     { return lexer::badtoken (TOK_INTCON); }
+{NOTCHAR}       { return lexer::badtoken (TOK_CHARCON); }
+{NOTSTRING}     { return lexer::badtoken (TOK_STRINGCON); }
 .               { lexer::badchar (*yytext); }
 
 %%

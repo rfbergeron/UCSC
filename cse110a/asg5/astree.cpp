@@ -3,6 +3,7 @@
 #include <cassert>
 #include <iomanip>
 #include <iostream>
+#include <cstring>
 using namespace std;
 
 #include "string_set.h"
@@ -19,7 +20,7 @@ ostream& operator<< (ostream& out, const location& loc) {
 
 ostream& operator<< (ostream& out, const astree* tree) {
    const char* tname = parser::get_tname (tree->symbol);
-   tname += 4;
+   if(strlen(tname) > 4) tname += 4;
    out << tname << " \"" << *tree->lexinfo << "\" " << tree->loc
        << " {" << tree->block_nr << "}";
    for(size_t i = 0; i < (size_t)attr::BITSET_SIZE; ++i) {

@@ -114,9 +114,8 @@ int generator::write_struct_decl(symbol_entry pair) {
 int generator::write_function_decl(astree* fun, symbol_table* locals) {
     // write function header (type, name, args, etc)
     astree* fun_name_node = fun->first()->second();
-    *out << setw(10) << left << *FUN_LABEL;
-    write_type(fun_name_node);
-    *out << *(fun_name_node->lexinfo) << " (";
+    *out << setw(10) << left << *FUN_LABEL << write_type(fun_name_node)
+         << *(fun_name_node->lexinfo) << " (";
     vector<astree*> params = fun->second()->children;
     for(size_t i = 0; i < params.size(); ++i) {
         if(i > 0) *out << ", ";

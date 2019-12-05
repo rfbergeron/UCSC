@@ -122,7 +122,7 @@ expr        : expr '+' expr                  { $$ = $2->adopt($1, $3); }
             | expr '-' expr                  { $$ = $2->adopt($1, $3); }
             | expr '/' expr                  { $$ = $2->adopt($1, $3); }
             | expr '*' expr                  { $$ = $2->adopt($1, $3); }
-            | expr '%' expr                  { $$ = $2->adopt($1, $3); }
+            | expr '%' expr                 { $$ = $2->adopt($1, $3); }
             | expr '=' expr                  { $$ = $2->adopt($1, $3); }
             | expr TOK_EQ expr               { $$ = $2->adopt($1, $3); }
             | expr TOK_NE expr               { $$ = $2->adopt($1, $3); }

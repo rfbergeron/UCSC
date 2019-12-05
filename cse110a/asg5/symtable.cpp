@@ -187,8 +187,9 @@ int type_checker::make_symbol_table(astree* root) {
                          << " is not an LVAL" << endl;
                     return -1;
                 }
-                // type is the type of the left operand
-                child->attributes = child->first()->attributes;
+                // type is the type of the right operand
+                child->attributes |= (child->second()->attributes &
+                        TYPE_ATTR_MASK);
                 if(status != 0) return status;
                 break;
             default:
@@ -434,8 +435,12 @@ int type_checker::validate_stmt_expr(astree* statement,
                 status = types_compatible(statement->first(), function);
                 if(status == 0) {
                     cerr << "ERROR: Incompatible return type" << endl;
-
                     return status;
+                } else {
+                    statement->set_attr(attr::VREG);
+                    statement->attributes |=
+                            (statement->first()->attributes &
+                             TYPE_ATTR_MASK);
                 }
             }  
             break;
@@ -493,9 +498,9 @@ int type_checker::validate_stmt_expr(astree* statement,
                 return -1;
             }
             // type is the type of the left operand
-            DEBUGH('t', "Setting return attributes to "
-                    << statement->first()->attributes);
-            statement->attributes = statement->first()->attributes;
+            statement->attributes |=
+                (statement->second()->attributes &
+                 TYPE_ATTR_MASK);
             break;
         // here begins the trees made by the "expr" production
         case TOK_EQ:
