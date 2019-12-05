@@ -269,7 +269,7 @@ int type_checker::make_structure_entry(astree* structure) {
             }
         }
         structure_value->fields = fields;
-        structure->decl_loc = structure->loc;
+        structure->first()->decl_loc = structure_value->lloc;
     }
     return 0;
 }
@@ -696,15 +696,23 @@ int type_checker::validate_type_id(astree* type, astree* identifier) {
             break;
         case TOK_IDENT:
             DEBUGH('t', "Type is pointer; resolving");
-            identifier->set_attr(attr::STRUCT);
-            identifier->type_id = type->lexinfo;
-            type->set_attr(attr::TYPEID);
-            if(type_names->find(identifier->type_id) ==
-                    type_names->end()) {
+            if(type_names->find(type->lexinfo) == type_names->end()) {
                 cerr << "ERROR: Type not declared: "
                      << *(identifier->type_id) << endl;
                 return -1;
+            } else {
+                symbol_value* type_value = type_names->at(
+                        type->lexinfo);
+                identifier->set_attr(attr::STRUCT);
+                identifier->type_id = type->lexinfo;
+                type->set_attr(attr::TYPEID);
+                type->decl_loc = type_value->lloc;
             }
+            break;
+        default:
+            cerr << "ERROR: Unhandled type" << endl;
+            return -1;
+            break;
     }
     identifier->decl_loc = identifier->loc;
     DEBUGH('t', "id now has attributes: " << identifier->attributes);
