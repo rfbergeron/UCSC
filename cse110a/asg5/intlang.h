@@ -13,8 +13,8 @@ class generator {
     using symbol_table = unordered_map<const string*,symbol_value*>;
     using symbol_entry = symbol_table::value_type;
     private:
-        static size_t string_count;
         static size_t branch_count;
+        static size_t vreg_count;
         static const string TAB;
         static ostream* out;
     public:
@@ -22,9 +22,10 @@ class generator {
         static int write_int_lang(astree* root,
                 vector<symbol_table*> tables, vector<string> strings);
         static int write_var_decl(symbol_entry);
-        static int write_string_decl(string);
+        static int write_string_decl(string, size_t);
         static int write_struct_decl(symbol_entry);
         static int write_function_decl(astree*,symbol_table*);
+        static void write_stmt_expr(astree*);
         static void write_type(symbol_value*);
         static void write_type(astree*);
 };

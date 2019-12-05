@@ -234,8 +234,8 @@ The switch block for the current level looks like the following:
   have the LVAL attribute, which should only occur on identifiers. These
   can be simple identifiers or the result of the INDEX and ARROW operators.
 
-  Ideally, the RHS will either be a constant or a VREG, which makes
-  emitting the result easier.
+  The RHS should be an IDENT or a VREG, which makes emitting this part of
+  the statement relatively easy.
 
 - If the node is a CALL, recur on the parameters. Assign the result of the
   call to a register.
@@ -267,6 +267,20 @@ The switch block for the current level looks like the following:
 
   If it is for an array, the argument is _x_ * _y_, where _x_ is the value
   of the second child in the astree, and _y_ is the typesize of the array.
+
+- If the node is any other binary or unary operator, recur on the first
+  child. If the child has the VREG attribute, save the value of the VREG
+  counter after the call.
+
+  If the node is a binary operator, recur on the second child. If the child
+  has the VREG attribute, save the value of the VREG counter after the
+  call.
+
+  If it is a unary operator and the operand is a VREG, we assign the result
+  of the operator to its source.
+
+  If it is a binary operator, assign the result to a VREG. Increment the
+  global VREG counter.
 
 ## 2 Pseudocode
 ```
