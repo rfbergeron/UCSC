@@ -171,7 +171,7 @@ int main(int argc, char** argv) {
             string_set::dump(strfile);
             astree::print(astfile, parser::root, 0); 
             type_checker::dump_symbols(symfile);
-            //generator::set_out(oilfile);
+            generator::set_out(&oilfile);
             generator::write_int_lang(parser::root,
                     type_checker::get_tables(),
                     type_checker::get_string_constants());

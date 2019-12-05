@@ -18,7 +18,7 @@ class generator {
         static const string TAB;
         static ostream* out;
     public:
-        static void set_out(ostream out_);
+        static void set_out(ostream* out_);
         static int write_int_lang(astree* root,
                 vector<symbol_table*> tables, vector<string> strings);
         static int write_var_decl(symbol_entry);

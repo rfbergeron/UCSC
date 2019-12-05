@@ -170,7 +170,7 @@ Takes one argument, an `astree*`, which should be one of this node's
 children. Takes the bitwise OR of the attributes of this node and the
 argument. Adopts the child node and returns itself.
 
-## 1.4 `intermediate.cpp intermediate.h`
+## 1.4 `intlang.cpp intlang.h`
 These files contain code for generating the intermediate language
 
 ### `class generator`
@@ -221,6 +221,52 @@ Takes a node of the astree which contains an expression. Recursively calls
 itself, then writes the single statement for the current node. Needs to
 return some kind of indicator as to the nature of it's child calls; ie
 whether or not it needs to use a register or something. 
+
+The switch block for the current level looks like the following:
+- If the node is an IDENT, do nothing; somehow indicate to the higher levels
+  that this level did not use a register.
+
+- If the node is a TYPEID, check to see if there is an assigment. If there
+  is, treat it as a normal assignment would be treated, since the value
+  was declared at the beginning of the block.
+
+- If the node is an "=", recur on both children. The left hand side must
+  have the LVAL attribute, which should only occur on identifiers. These
+  can be simple identifiers or the result of the INDEX and ARROW operators.
+
+  Ideally, the RHS will either be a constant or a VREG, which makes
+  emitting the result easier.
+
+- If the node is a CALL, recur on the parameters. Assign the result of the
+  call to a register.
+
+- If the node is an ARROW, recur on the LHS. Ideally, the LHS should not
+  be in a register if it is a simple identifier, but that can be done later.
+
+  The RHS' name is componded with the name of the structure type followed by
+  two colons
+
+- If the node is an INDEX, recur on the LHS. Ideally, the LHS should not be
+  in a register if it is a simple identifier, but that can be done later.
+
+  The LHS, so far as I can tell, can only be an identifier or a structure
+  field, or maybe an allocator call. Allocator calls are weird but easy
+  since their result belongs in a VREG.
+
+  If the array name is retrieved from a structure or alloc, it will be
+  stored in a VREG. The array index will be a constant or VREG and will
+  be multiplied by the typesize of the array.
+
+- If the node is an ALLOC, emit a call to "malloc". 
+
+  If the memory to be allocated is for a structure, the argument to malloc
+  is "sizeof struct _ident_".
+
+  If it is for a string, the argument is simply _n_, where _n_ is the value
+  of the second child in the astree.
+
+  If it is for an array, the argument is _x_ * _y_, where _x_ is the value
+  of the second child in the astree, and _y_ is the typesize of the array.
 
 ## 2 Pseudocode
 ```

@@ -17,13 +17,14 @@ size_t generator::branch_count = 0;
 ostream* generator::out = &cout;
 const string generator::TAB = "          ";
 
-void generator::set_out(ostream out_) {
-    out = &out_;
+void generator::set_out(ostream* out_) {
+    out = out_;
 }
 
 int generator::write_int_lang(astree* root,
         vector<symbol_table*> tables,
         vector<string> strings) {
+    DEBUGH('l', "Writing structure definitions");
     vector<symbol_entry> sorted_structures =
             type_checker::sort_symtable(tables[tables.size()-1]);
     tables.pop_back();
@@ -31,10 +32,15 @@ int generator::write_int_lang(astree* root,
             itor != sorted_structures.end(); ++itor) {
         write_struct_decl(*itor);
     }
+
+    DEBUGH('l', "Writing string constant definitions");
     for(auto&& itor = strings.cbegin(); itor != strings.end();
             ++itor) {
         write_string_decl(*itor);
     }
+    *out << endl;
+
+    DEBUGH('l', "Writing global definitions");
     vector<symbol_entry> sorted_globals =
             type_checker::sort_symtable(tables[tables.size()-1]);
     tables.pop_back();
@@ -47,11 +53,13 @@ int generator::write_int_lang(astree* root,
         else
             write_var_decl(*itor);
     }
+    *out << endl;
 
     vector<astree*> statements = root->children;
     for(auto&& itor = statements.cbegin();
             itor != statements.cend(); ++itor) {
-        if((*itor)->has_attr(attr::FUNCTION)) {
+        if((*itor)->symbol == TOK_FUNCTION) {
+            DEBUGH('l', "Writing a function definition");
             size_t fn_block = (*itor)->second()->block_nr - 1;
             write_function_decl(*itor, tables[fn_block]);
         }
@@ -79,7 +87,8 @@ int generator::write_var_decl(symbol_entry pair) {
 }
 
 int generator::write_string_decl(string s) {
-    *out << ".string .s" << string_count++ << " \"" << s << "\"";
+    *out << ".string .s" << string_count++ << " \""
+         << s << "\"" << endl;
     return 0;
 }
 
@@ -94,7 +103,7 @@ int generator::write_struct_decl(symbol_entry pair) {
             write_var_decl(*itor);
         }
     }
-    *out << ".end" << endl;
+    *out << ".end" << endl << endl;
     return 0;
 }
 
@@ -117,10 +126,12 @@ int generator::write_function_decl(astree* fun, symbol_table* locals) {
             type_checker::sort_symtable(locals);
     for(auto&& itor = sorted_locals.cbegin(); itor !=
             sorted_locals.cend(); ++itor) {
-        write_var_decl(*itor);
+        if(!((*itor).second->has_attr(attr::PARAM))) {
+            write_var_decl(*itor);
+        }
     }
     *out << TAB << "return" << endl;
-    *out << ".end" << endl;
+    *out << ".end" << endl << endl;
     return 0;
 }
 
@@ -156,7 +167,7 @@ void generator::write_type(astree* tree) {
     } else if(tree->has_attr(attr::VOID)) {
         *out << " ";
     } else if(tree->has_attr(attr::STRUCT)) {
-        *out << "struct " << tree->type_id << " ";
+        *out << "struct " << *(tree->type_id) << " ";
     } else if(tree->has_attr(attr::STRING)) {
         *out << "void* ";
     }
@@ -171,7 +182,7 @@ void generator::write_type(symbol_value* value) {
     } else if(value->has_attr(attr::VOID)) {
         *out << " ";
     } else if(value->has_attr(attr::STRUCT)) {
-        *out << "struct " << value->type_id << " ";
+        *out << "struct " << *(value->type_id) << " ";
     } else if(value->has_attr(attr::STRING)) {
         *out << "void* ";
     }

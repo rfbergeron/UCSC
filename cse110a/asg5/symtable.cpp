@@ -102,27 +102,40 @@ vector<string> type_checker::get_string_constants() {
 }
 
 vector<symbol_entry> type_checker::sort_symtable(symbol_table* table) {
+    DEBUGH('9', "Sorting symtable");
     vector<symbol_entry> sorted;
-    symbol_entry min_lloc = *(table->begin());
+    if(table->empty()) return sorted;
+    symbol_entry*  min_lloc = nullptr;
     while(sorted.size() < table->size()) {
-        for(const auto & entry : *table) {
-            if(find(sorted.begin(), sorted.end(), entry)
-                    != sorted.end())
-                continue;
-            if(entry.second->lloc.filenr < min_lloc.second->lloc.filenr) {
-                make_pair(entry.first, entry.second);
+        DEBUGH('9', "Sorting another table entry");
+        for(auto & entry : *table) {
+            bool in_sorted = false;
+            for(symbol_entry sortee : sorted) {
+                if(entry.first == sortee.first) {
+                    DEBUGH('9', "Entry " << *(entry.first)
+                            << " has already been sorted; continue");
+                    in_sorted = true;
+                }
+            }
+            if(in_sorted) continue;
+            if(min_lloc == nullptr) min_lloc = &entry;
+
+            if(entry.second->lloc.filenr < min_lloc->second->lloc.filenr) {
+                min_lloc = &entry;
             } else if(
-                    entry.second->lloc.filenr == min_lloc.second->lloc.filenr &&
-                    entry.second->lloc.linenr < min_lloc.second->lloc.linenr) {
-                make_pair(entry.first, entry.second);
+                    entry.second->lloc.filenr == min_lloc->second->lloc.filenr &&
+                    entry.second->lloc.linenr < min_lloc->second->lloc.linenr) {
+                min_lloc = &entry;
             } else if(
-                    entry.second->lloc.filenr == min_lloc.second->lloc.filenr &&
-                    entry.second->lloc.linenr == min_lloc.second->lloc.linenr &&
-                    entry.second->lloc.offset <= min_lloc.second->lloc.offset) {
-                make_pair(entry.first, entry.second);
+                    entry.second->lloc.filenr == min_lloc->second->lloc.filenr &&
+                    entry.second->lloc.linenr == min_lloc->second->lloc.linenr &&
+                    entry.second->lloc.offset <= min_lloc->second->lloc.offset) {
+                min_lloc = &entry;
             }
         }
-        sorted.push_back(min_lloc);
+        DEBUGH('9', "Inserting entry " << *(min_lloc->first));
+        sorted.push_back(*min_lloc);
+        min_lloc = nullptr;
     }
     return sorted;
 }
@@ -823,29 +836,39 @@ void type_checker::set_block_nr(astree* tree, size_t nr) {
 void type_checker::dump_symbols(ostream& out) {
     size_t current_block_nr = 0;
     DEBUGH('s', "Dumping structure types");
-    for(auto iter = type_names->begin(); iter != type_names->end();
-            ++iter) {
-        out << iter->second << endl;
-        for(auto fiter = iter->second->fields->begin(); fiter !=
-                iter->second->fields->end(); ++fiter) {
-            out << "   " << *(fiter->first) << " " << fiter->second
-                << endl;
+    vector<symbol_entry> sorted_structures = sort_symtable(type_names);
+    for(auto&& itor = sorted_structures.begin();
+            itor != sorted_structures.end(); ++itor) {
+        out << *(itor->first) << " " << itor->second << endl;
+        vector<symbol_entry> sorted_fields = 
+            sort_symtable(itor->second->fields);
+        for(auto &&itor2 = sorted_fields.begin();
+                itor2 != sorted_fields.end(); ++itor2) {
+            out << "   " << *(itor2->first) << " "
+                << itor2->second << endl;
         }
+        out << endl;
     }
+
     DEBUGH('s', "Dumping global declarations");
-    for(auto iter = globals->begin(); iter != globals->end(); ++iter) {
-        out << *(iter->first) << " " << iter->second << endl;
-        if(iter->second->attributes.test((size_t)attr::FUNCTION)) {
+    vector<symbol_entry> sorted_globals = sort_symtable(globals);
+    for(auto itor = sorted_globals.begin();
+            itor != sorted_globals.end(); ++itor) {
+        DEBUGH('s', "Writing a global value");
+        out << *(itor->first) << " " << itor->second << endl;
+        if(itor->second->has_attr(attr::FUNCTION)) {
             DEBUGH('s', "Dumping local declarations for block "
                     << current_block_nr + 1);
-            symbol_table* locals = tables[current_block_nr];
-            for(auto liter = locals->begin(); liter != locals->end();
-                    ++liter) {
-                //if(liter->second->block_nr == current_block_nr) {
-                    out << "   " << *(liter->first) << " "
-                        << liter->second << endl;
-                //}
+            vector<symbol_entry> sorted_locals =
+                    sort_symtable(tables[current_block_nr]);
+            DEBUGH('s', "Symtable sorted");
+            for(auto&& itor2 = sorted_locals.begin();
+                    itor2 != sorted_locals.end(); ++itor2) {
+                DEBUGH('s', "Writing a local value");
+                out << "   " << *(itor2->first) << " "
+                    << itor2->second << endl;
             }
+            DEBUGH('t', "All local values written");
             ++current_block_nr;
             out << endl;
         }
