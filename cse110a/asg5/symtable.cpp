@@ -171,7 +171,7 @@ int type_checker::make_symbol_table(astree* root) {
                 status = validate_stmt_expr(child->second(),
                         &DUMMY_FUNCTION, dummy_sequence);
                 if(status != 0) return status;
-                if(!types_equal(child->first(), child->second())) {
+                if(!types_compatible(child->first(), child->second())) {
                     cerr << "ERROR: Incompatible types for global"
                          << endl;
                     return -1;
@@ -215,7 +215,7 @@ int type_checker::make_global_entry(astree* global) {
             status = validate_stmt_expr(global->third(),
                     &DUMMY_FUNCTION, dummy_sequence);
             if(status != 0) return status;
-            if(!types_equal(global->third(), global->second())) {
+            if(!types_compatible(global->third(), global->second())) {
                 cerr << "ERROR: Incompatible type for global variable"
                      << endl;
                 return -1;
@@ -378,7 +378,7 @@ int type_checker::make_local_entry(astree* local, size_t& sequence_nr) {
             status = validate_stmt_expr(local->third(),
                     &DUMMY_FUNCTION, dummy_sequence);
             if(status != 0) return status;
-            if(!types_equal(local->third(), local->second())) {
+            if(!types_compatible(local->third(), local->second())) {
                 cerr << "ERROR: Incompatible type for local variable"
                      << endl;
                 return -1;
@@ -424,7 +424,7 @@ int type_checker::validate_stmt_expr(astree* statement,
             } else {
                 validate_stmt_expr(statement->first(), function_name,
                         sequence_nr);
-                status = types_equal(statement->first(), function);
+                status = types_compatible(statement->first(), function);
                 if(status == 0) {
                     cerr << "ERROR: Incompatible return type" << endl;
 
@@ -473,7 +473,7 @@ int type_checker::validate_stmt_expr(astree* statement,
             status = validate_stmt_expr(statement->second(),
                     function_name, sequence_nr);
             if(status != 0) return status;
-            if(!types_equal(statement->first(), statement->second())) {
+            if(!types_compatible(statement->first(), statement->second())) {
                 cerr << "ERROR: Incompatible types for tokens: "
                      << parser::get_tname(statement->first()->symbol)
                      << " " << parser::get_tname(statement->second()->
@@ -508,7 +508,7 @@ int type_checker::validate_stmt_expr(astree* statement,
             status = validate_stmt_expr(statement->second(),
                     function_name, sequence_nr);
             if(status != 0) return status;
-            if(!types_equal(statement->first(), statement->second())) {
+            if(!types_compatible(statement->first(), statement->second())) {
                 cerr << "ERROR: Incompatible types for operator: "
                      << statement->symbol << endl;
                 return -1;
@@ -713,7 +713,7 @@ int type_checker::validate_call(astree* call) {
                     &DUMMY_FUNCTION, dummy_sequence);
             if(status != 0) return status;
             DEBUGH('t', "Comparing types");
-            if(!types_equal(param, function->parameters[i])) {
+            if(!types_compatible(param, function->parameters[i])) {
                 cerr << "ERROR: incompatible type for argument: "
                      << *(param->lexinfo) << endl;
                 return -1;
@@ -764,29 +764,41 @@ bool type_checker::functions_equal(symbol_value* f1, symbol_value* f2) {
     if(f1->parameters.size() != f2->parameters.size())
         return false;
     for(size_t i = 0; i < f1->parameters.size(); ++i) {
-        if(!types_equal(f1->parameters[i], f2->parameters[i]))
+        if(!types_compatible(f1->parameters[i], f2->parameters[i]))
             return false;
     }
     return true;
 }
 
-bool type_checker::types_equal(symbol_value* v1, symbol_value* v2) {
-    return types_equal(v1->attributes, v2->attributes);
+bool type_checker::types_compatible(symbol_value* v1, symbol_value* v2) {
+    return types_compatible(v1->attributes, v2->attributes);
 }
 
-bool type_checker::types_equal(astree* t1, astree* t2) {
+bool type_checker::types_compatible(astree* t1, astree* t2) {
     if(t1->symbol == TOK_TYPE_ID) t1 = t1->second();
-    return types_equal(t1->attributes, t2->attributes);
+    return types_compatible(t1->attributes, t2->attributes);
 }
 
-bool type_checker::types_equal(astree* tree, symbol_value* entry) {
+bool type_checker::types_compatible(astree* tree, symbol_value* entry) {
     if(tree->symbol == TOK_TYPE_ID) tree = tree->second();
-    return types_equal(tree->attributes, entry->attributes);
+    return types_compatible(tree->attributes, entry->attributes);
 }
 
-bool type_checker::types_equal(attr_bitset a1, attr_bitset a2) {
+bool type_checker::types_compatible(attr_bitset a1, attr_bitset a2) {
     DEBUGH('t', "Comparing bitsets: " << a1 << " and " << a2);
-    if(a1.test((size_t)attr::ARRAY) !=
+    if((a1.test((size_t)attr::ARRAY) ||
+            a1.test((size_t)attr::STRUCT) ||
+            a1.test((size_t)attr::STRING) ||
+            a1.test((size_t)attr::NULLPTR_T)) &&
+            a2.test((size_t)attr::NULLPTR_T)) {
+        return true;
+    } else if((a2.test((size_t)attr::ARRAY) ||
+            a2.test((size_t)attr::STRUCT) ||
+            a2.test((size_t)attr::STRING) ||
+            a2.test((size_t)attr::NULLPTR_T)) &&
+            a1.test((size_t)attr::NULLPTR_T)) {
+        return true;
+    } else if(a1.test((size_t)attr::ARRAY) !=
             a2.test((size_t)attr::ARRAY)) {
         return false;
     } else if(a1.test((size_t)attr::VOID) &&

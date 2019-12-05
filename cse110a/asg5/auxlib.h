@@ -64,7 +64,7 @@ class debug {
 //    will print two words and a newline if flag 'u' is  on.
 //    Traces are preceded by filename, line number, and function.
 //
-// DEBUGT -
+// DEBUGH -
 //    DEBUGF, but shortens debug statments by not printing the
 //    long __PRETTY_FUNCTION__ macro
 

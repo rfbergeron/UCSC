@@ -93,10 +93,10 @@ class type_checker {
         static int assign_type(astree* ident, symbol_value* value);
         static int assign_type(astree* dest, astree* source);
         static bool functions_equal(symbol_value* f1, symbol_value* f2);
-        static bool types_equal(symbol_value*, symbol_value*);
-        static bool types_equal(astree*, astree*);
-        static bool types_equal(astree*, symbol_value*);
-        static bool types_equal(attr_bitset, attr_bitset);
+        static bool types_compatible(symbol_value*, symbol_value*);
+        static bool types_compatible(astree*, astree*);
+        static bool types_compatible(astree*, symbol_value*);
+        static bool types_compatible(attr_bitset, attr_bitset);
         static astree* extract_param(astree* function, size_t index);
         static const string* extract_ident(astree* type_id);
         static attr get_type_attr(const symbol_value* symval);

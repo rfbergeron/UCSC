@@ -155,6 +155,7 @@ int main(int argc, char** argv) {
 
    string command = CPP + cpp_opts + " " + oc_name;
    yyin = popen(command.c_str(), "r");
+   int exit_status = EXIT_SUCCESS;
    if(yyin == nullptr ) {
       cerr << "failed to open pipe for command: " << command << endl;
       return EXIT_FAILURE;
@@ -167,7 +168,7 @@ int main(int argc, char** argv) {
          // do type checking
          int typecheck_status = type_checker::
               make_symbol_table(parser::root);
-         //if(typecheck_status == 0) {
+         if(typecheck_status == 0) {
             string_set::dump(strfile);
             astree::print(astfile, parser::root, 0); 
             type_checker::dump_symbols(symfile);
@@ -177,13 +178,16 @@ int main(int argc, char** argv) {
                     type_checker::get_string_constants());
             DEBUGH('y', "  all outputs dumped");
             type_checker::destroy_tables();
-         //} else {
-         //   cerr << "Type checking failed" << endl;
-         //}
+         } else {
+            cerr << "Type checking failed" << endl;
+            exit_status = EXIT_FAILURE;
+         }
       }
       else {
         cerr << "Parsing failed with status " << parse_status << endl;  
+        exit_status = EXIT_FAILURE;
       }
+
       int pclose_status = pclose(yyin);
       cerr_status (command.c_str(), pclose_status);
       strfile.close();
@@ -191,6 +195,6 @@ int main(int argc, char** argv) {
       astfile.close();
       symfile.close();
       DEBUGH('a', "  exiting");
-      return EXIT_SUCCESS;
+      return exit_status;
    }
 }

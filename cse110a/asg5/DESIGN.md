@@ -188,39 +188,43 @@ and branch statements that have been written in the current block, so
 that these values do not need to be passed as arguments in the related
 functions.
 
-### `write_struct_def`
+### `LABEL`
+Macro that takes 2 arguments: the label to use and the sequence of "<<"-
+concatenated strings which will be output after the label. Called when
+just about anything needs to be written to the intermediate language file.
+
+### `write_struct_decl`
 Takes an entry in the symtable as input. Writes the structure definiton to
 the intermediate language file.
 
-### `write_global_def`
+### `write_var_decl`
 Takes an entry in the global symtable as input. Writes the global definition
 to the intermediate language file.
 
-### `write_fun_def`
+### `write_fun_decl`
 Takes an entry in the astree that corresponds to a function definiton.
 
-### `write_string_def`
+### `write_string_decl`
 Takes an entry in either the global or local symtable. Writes the definition
 of the string constant to the intermediate language file.
-
-### `write_local_def`
-Takes an entry in the local symtable. Writes the .locla declaration to the
-intermediate language file.
-
-### `write_branch_def`
-Takes a node of the astree which contains an if or while statement. If the
-conditional expression is a compound one, write the branching statements
-out before the actual condition itself. Then, write the th/el/fi or do/od
-blocks.
-
-### `write_alloc`
-Takes a node of the astree which contains an alloc statement
 
 ### `write_expressions`
 Takes a node of the astree which contains an expression. Recursively calls
 itself, then writes the single statement for the current node. Needs to
 return some kind of indicator as to the nature of it's child calls; ie
 whether or not it needs to use a register or something. 
+
+Takes 3 arguments: the node to evaluate, whether or not the caller can
+print out compound expressions, and the label to be printed for the
+current statement, and the current statement ALONE.
+
+This function will need to decide whether or not the expression it is
+evaluating needs to be written to an intermediate register. A value does
+not need to be written to an intermediate register if it's caller is
+able to tolerate slightly more complex expressions. This includes, but
+may not be limited to:
+- the assignment operator "="
+I guess that's it lmao
 
 The switch block for the current level looks like the following:
 - If the node is an IDENT, do nothing; somehow indicate to the higher levels
