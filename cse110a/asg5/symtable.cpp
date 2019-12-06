@@ -489,8 +489,9 @@ int type_checker::validate_stmt_expr(astree* statement,
                      statement->second())) {
                 cerr << "ERROR: Incompatible types for tokens: "
                      << parser::get_tname(statement->first()->symbol)
-                     << " " << parser::get_tname(statement->second()->
-                        symbol) << endl;
+                     << " " << *(statement->first()->lexinfo) << " "
+                     << parser::get_tname(statement->second()->symbol)
+                     << " " << *(statement->second()->lexinfo) << endl;
                 return -1;
             } else if(!statement->first()->attributes.test(
                     (size_t)attr::LVAL)) {
@@ -505,6 +506,20 @@ int type_checker::validate_stmt_expr(astree* statement,
         // here begins the trees made by the "expr" production
         case TOK_EQ:
         case TOK_NE:
+            // types can be arbitrary here
+            status = validate_stmt_expr(statement->first(),
+                    function_name, sequence_nr);
+            if(status != 0) return status;
+            status = validate_stmt_expr(statement->second(),
+                    function_name, sequence_nr);
+            if(status != 0) return status;
+            if(!types_compatible(statement->first(),
+                     statement->second())) {
+                cerr << "ERROR: Incompatible types for operator: "
+                     << statement->symbol << endl;
+                return -1;
+            }
+            break;
         case TOK_LE:
         case TOK_GE:
         case TOK_GT:
@@ -529,8 +544,11 @@ int type_checker::validate_stmt_expr(astree* statement,
             } else if(!statement->first()->attributes.test(
                 (size_t)attr::INT)) {
                 cerr << "ERROR: Operator "
-                     << static_cast<char>(statement->symbol)
+                     << parser::get_tname(statement->symbol)
                      << " must have operands of type int" << endl;
+                cerr << "Offending operands: "
+                     << *(statement->first()->lexinfo) << " "
+                     << *(statement->second()->lexinfo) << endl;
                 return -1;
             }
             break;
@@ -578,15 +596,22 @@ int type_checker::validate_stmt_expr(astree* statement,
             status = validate_stmt_expr(statement->second(),
                     function_name, sequence_nr);
             if(status != 0) return status;
-            if(!(statement->first()->attributes.test((size_t)attr::
-                    ARRAY) && statement->second()->attributes.test(
-                    (size_t)attr::INT))) {
-                cerr << "ERROR: Incompatible types for indexing"
-                     << " operator" << endl;
-                return -1;
+            if(statement->second()->has_attr(attr::INT)) {
+                if(statement->first()->has_attr(attr::ARRAY)) {
+                    statement->attributes |=
+                        (statement->first()->attributes &
+                         TYPE_ATTR_MASK);
+                    statement->attributes.reset((size_t)attr::ARRAY);
+                } else if(statement->first()->has_attr(attr::STRING)) {
+                    statement->set_attr(attr::INT);
+                } else {
+                    cerr << "ERROR: only strings and arrays may be"
+                         << " indexed" << endl;
+                }
+            } else {
+                cerr << "ERROR: argument to index operator must be"
+                     << " of type int" << endl;
             }
-            statement->attributes |= statement->first()->attributes;
-            statement->attributes.reset((size_t)attr::ARRAY);
             break;
         case TOK_ARROW:
             // evaluate left but not right since right

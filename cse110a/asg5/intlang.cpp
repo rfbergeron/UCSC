@@ -120,8 +120,8 @@ int generator::write_function_decl(astree* fun, symbol_table* locals) {
     for(size_t i = 0; i < params.size(); ++i) {
         if(i > 0) *out << ", ";
         astree* param_name_node = params[i]->second();
-        write_type(param_name_node);
-        *out << *(param_name_node->lexinfo);
+        *out << write_type(param_name_node)
+             << *(param_name_node->lexinfo);
     }
     *out << ")" << endl;
 
@@ -251,28 +251,31 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             DEBUGH('l', "Expression is alloc");
             ret = "malloc(";
             if(expr->has_attr(attr::ARRAY)) {
-                size = write_stmt_expr(expr->second(), label);
-                ret += size;
+                right_operand = write_stmt_expr(expr->second(), label);
+                size = "$t" + to_string(vreg_count++) + ":i";
 
                 if(expr->has_attr(attr::STRUCT)) {
-                    ret += " * sizeof ptr";
+                    left_operand = "sizeof ptr";
                 } else if(expr->has_attr(attr::INT)) {
-                    ret +=  " * sizeof int";
+                    left_operand = "sizeof int";
                 } else if(expr->has_attr(attr::STRING)) {
-                    ret += " * sizeof ptr";
+                    left_operand = "sizeof ptr";
                 } else {
-                    ret += "ERR";
+                    left_operand = "ERR";
                 }
+
+                WRLABEL(*label, size << " = " << right_operand
+                        << " * " << left_operand);
+                if(label != NO_LABEL) label = NO_LABEL;
             } else if(expr->has_attr(attr::STRING)) {
                 size = write_stmt_expr(expr->second(), label);
-                ret += size;
             } else if(expr->has_attr(attr::STRUCT)) {
-                ret += "sizeof struct ";
-                ret += *(expr->first()->lexinfo);
+                size = "sizeof struct ";
+                size += *(expr->first()->lexinfo);
             } else {
-                ret += "ERR";
+                size = "ERR";
             }
-            ret += ")";
+            ret += size + ")";
 
             if(return_compound) {
                 return ret;
@@ -292,7 +295,7 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
                         + "::" + *(expr->second()->lexinfo);
             } else {
                 destination = "$t" + to_string(vreg_count++);
-                destination += write_stride(expr->second());
+                destination += write_reg_type(expr->second());
                 WRLABEL(*label, destination << " = " << structure
                         << "->" << *(expr->first()->type_id) << "::"
                         << *(expr->second()->lexinfo));
@@ -305,12 +308,13 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             array = write_stmt_expr(expr->first(), label);
             index = write_stmt_expr(expr->second(), label);
             // typesize is size of returned value, not of array itself
-            ret += array + "[" + index + " * " + write_stride(expr) + "]";
+            ret += array + "[" + index + " * " +
+                write_stride(expr, expr->first()) + "]";
             if(return_compound) {
                 return ret;
             } else {
                 destination = "$t" + to_string(vreg_count++);
-                destination += write_stride(expr);
+                destination += write_reg_type(expr);
                 WRLABEL(*label, destination << " = " << ret);
                 if(label != NO_LABEL) label = NO_LABEL;
                 return destination;
@@ -346,7 +350,7 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
                 return ret;
             } else {
                 destination += "$t" + to_string(vreg_count++);
-                destination += write_stride(expr->first());
+                destination += write_reg_type(expr->first());
                 WRLABEL(*label, destination << " = " << ret);
                 if(label != NO_LABEL) label = NO_LABEL;
                 return destination;
@@ -440,12 +444,22 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
     }
 }
 
-string generator::write_stride(astree* tree) {
-    if(tree->has_attr(attr::ARRAY)) {
+string generator::write_stride(astree* index, astree* memblock) {
+    if(index->has_attr(attr::STRUCT)) {
         return ":p";
-    } else if(tree->has_attr(attr::STRUCT)) {
-        return ":p";
-    } else if(tree->has_attr(attr::STRING)) {
+    } else if(memblock->has_attr(attr::STRING)) {
+        return ":c";
+    } else if(index->has_attr(attr::INT)) {
+        return ":i";
+    } else {
+        return "ERR";
+    }
+}
+
+string generator::write_reg_type(astree* tree) {
+    if(tree->has_attr(attr::ARRAY) ||
+            tree->has_attr(attr::STRUCT) ||
+            tree->has_attr(attr::STRING)) {
         return ":p";
     } else if(tree->has_attr(attr::INT)) {
         return ":i";
@@ -453,6 +467,7 @@ string generator::write_stride(astree* tree) {
         return "ERR";
     }
 }
+
 
 string generator::write_type(astree* tree) {
     // i think this is the type for all arrays?

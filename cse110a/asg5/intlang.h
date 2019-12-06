@@ -36,7 +36,8 @@ class generator {
         static string write_stmt_expr(astree* expr,
                 const string*& label,
                 bool return_compound = false);
-        static string write_stride(astree*);
+        static string write_stride(astree* index, astree* memblock);
+        static string write_reg_type(astree*);
         static string write_type(symbol_value*);
         static string write_type(astree*);
 };
