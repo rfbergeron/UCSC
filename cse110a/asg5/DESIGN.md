@@ -226,6 +226,15 @@ may not be limited to:
 - the assignment operator "="
 I guess that's it lmao
 
+When to use the different register labels:
+- ":i" should be used when the the operand/operands are of type integer,
+  and for the results of the integer and comparison operators. It should
+  also be used when indexing an array of integers
+- ":c" should be used when indexing a string. Check for this after
+  checking for the array attribute
+- ":p" should be used when assigning a pointer/struct to a register, and
+  maybe when you store the address of an array or a string
+
 The switch block for the current level looks like the following:
 - If the node is an IDENT, do nothing; somehow indicate to the higher levels
   that this level did not use a register.

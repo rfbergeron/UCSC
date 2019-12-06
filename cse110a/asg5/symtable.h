@@ -91,7 +91,6 @@ class type_checker {
         static int validate_call(astree*);
         static int assign_type(astree* ident);
         static int assign_type(astree* ident, symbol_value* value);
-        static int assign_type(astree* dest, astree* source);
         static bool functions_equal(symbol_value* f1, symbol_value* f2);
         static bool types_compatible(symbol_value*, symbol_value*);
         static bool types_compatible(astree*, astree*);

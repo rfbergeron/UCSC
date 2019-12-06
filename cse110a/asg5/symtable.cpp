@@ -269,6 +269,7 @@ int type_checker::make_structure_entry(astree* structure) {
             }
         }
         structure_value->fields = fields;
+        structure->decl_loc = structure->loc;
     }
     return 0;
 }
@@ -651,6 +652,8 @@ int type_checker::validate_type_id(astree* type, astree* identifier) {
         identifier->attributes.set((size_t)attr::ARRAY);
         type = type->first();
     }
+    astree* type_node;
+    symbol_value* type_value;
     switch(type->symbol) {
         case TOK_INT:
             DEBUGH('t', "Setting attribute INT");
@@ -662,14 +665,18 @@ int type_checker::validate_type_id(astree* type, astree* identifier) {
             break;
         case TOK_PTR:
             DEBUGH('t', "Setting attribute STRUCT");
-            identifier->attributes.set((size_t)attr::STRUCT);
-            type->first()->attributes.set((size_t)attr::TYPEID);
-            identifier->type_id = type->first()->lexinfo;
-            if(type_names->find(identifier->type_id) ==
+            type_node = type->first();
+            if(type_names->find(type_node->lexinfo) ==
                     type_names->end()) {
                 cerr << "ERROR: Type not declared: "
-                     << *(identifier->type_id) << endl;
+                     << *(type_node->lexinfo) << endl;
                 return -1;
+            } else {
+                type_value = type_names->at(type_node->lexinfo);
+                type_node->decl_loc = type_value->lloc;
+                type_node->attributes.set((size_t)attr::TYPEID);
+                identifier->attributes.set((size_t)attr::STRUCT);
+                identifier->type_id = type_node->lexinfo;
             }
             break;
         case TOK_VOID:
@@ -699,6 +706,7 @@ int type_checker::validate_type_id(astree* type, astree* identifier) {
                 return -1;
             }
     }
+    identifier->decl_loc = identifier->loc;
     DEBUGH('t', "id now has attributes: " << identifier->attributes);
     return 0;
 }
@@ -733,6 +741,9 @@ int type_checker::validate_call(astree* call) {
         }
         call->attributes |= function->attributes;
         call->first()->attributes |= function->attributes;
+        call->type_id = function->type_id;
+        call->first()->type_id = function->type_id;
+        call->first()->decl_loc = function->lloc;
         return 0;
     } else {
         cerr << "ERROR: Invalid call to function: "
@@ -745,13 +756,11 @@ int type_checker::assign_type(astree* ident) {
     DEBUGH('t', "Attempting to assign a type");
     const string* id_str = ident->lexinfo;
     if(locals->find(id_str) != locals->end()) {
-        DEBUGH('t', "Assigned " << *id_str << " a local value");
-        ident->attributes = locals->at(id_str)->attributes;
-        ident->type_id = locals->at(id_str)->type_id;
+        DEBUGH('t', "Assigning " << *id_str << " a local value");
+        assign_type(ident, locals->at(id_str));
     } else if(globals->find(id_str) != globals->end()) {
-        DEBUGH('t', "Assigned " << *id_str << " a global value");
-        ident->attributes = globals->at(id_str)->attributes;
-        ident->type_id = globals->at(id_str)->type_id;
+        DEBUGH('t', "Assigning " << *id_str << " a global value");
+        assign_type(ident, globals->at(id_str));
     } else {
         cerr << "ERROR: could not resolve symbol: "
              << (ident->lexinfo) << " "
@@ -762,13 +771,9 @@ int type_checker::assign_type(astree* ident) {
 }
 
 int type_checker::assign_type(astree* ident, symbol_value* value) {
-    DEBUGH('t', "Type has been found; assigning");
     ident->attributes |= value->attributes;
-    return 0;
-}
-
-int type_checker::assign_type(astree* dest, astree* source) {
-    dest->attributes |= source->attributes;
+    ident->type_id = value->type_id;
+    ident->decl_loc = value->lloc;
     return 0;
 }
 

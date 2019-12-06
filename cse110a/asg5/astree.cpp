@@ -32,7 +32,7 @@ ostream& operator<< (ostream& out, const astree* tree) {
    }
 
    if(tree->symbol == TOK_IDENT) {
-      out << " (loc here)";
+      out << " " << tree->decl_loc;
    }
 
    return out;

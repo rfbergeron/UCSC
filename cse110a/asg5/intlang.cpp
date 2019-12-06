@@ -132,10 +132,7 @@ int generator::write_function_decl(astree* fun, symbol_table* locals) {
             type_checker::sort_symtable(locals);
     for(auto&& itor = sorted_locals.cbegin(); itor !=
             sorted_locals.cend(); ++itor) {
-        if(!((*itor).second->has_attr(attr::PARAM))) {
-            write_var_decl(*itor);
-        } else {
-        }
+        write_var_decl(*itor);
     }
 
     // write block
@@ -296,7 +293,7 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
                         + "::" + *(expr->second()->lexinfo);
             } else {
                 destination = "$t" + to_string(vreg_count++);
-                destination += ":X";
+                destination += write_stride(expr->second());
                 WRLABEL(*label, destination << " = " << structure
                         << "->" << *(expr->first()->type_id) << "::"
                         << *(expr->second()->lexinfo));
@@ -308,13 +305,13 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             DEBUGH('l', "Expression is index");
             array = write_stmt_expr(expr->first(), label);
             index = write_stmt_expr(expr->second(), label);
-            // TODO(rbergero): mult index by typesize of array
-            ret += array + "[" + index + " * :X]";
+            // typesize is size of returned value, not of array itself
+            ret += array + "[" + index + " * " + write_stride(expr) + "]";
             if(return_compound) {
                 return ret;
             } else {
                 destination = "$t" + to_string(vreg_count++);
-                destination += ":X";
+                destination += write_stride(expr);
                 WRLABEL(*label, destination << " = " << ret);
                 if(label != NO_LABEL) label = NO_LABEL;
                 return destination;
@@ -342,11 +339,15 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
                 ret += param_strings[i];
             }
             ret += ")";
-            if(return_compound) {
+            if(expr->has_attr(attr::VOID)) {
+                WRLABEL(*label, ret);
+                if(label != NO_LABEL) label = NO_LABEL;
+                return "";
+            } else if(return_compound) {
                 return ret;
             } else {
                 destination += "$t" + to_string(vreg_count++);
-                destination += ":X";
+                destination += write_stride(expr->first());
                 WRLABEL(*label, destination << " = " << ret);
                 if(label != NO_LABEL) label = NO_LABEL;
                 return destination;
@@ -418,6 +419,9 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             }
             return "";
             break;
+        case TOK_NULLPTR:
+            return "0:p";
+            break;
         case TOK_IDENT:
         case TOK_INTCON:
         case TOK_CHARCON:
@@ -434,6 +438,20 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             cerr << "UNIMPLEMENTED: " << parser::get_tname(expr->symbol)
                  << " " << *(expr->lexinfo) << endl;
             return "ERR";
+    }
+}
+
+string generator::write_stride(astree* tree) {
+    if(tree->has_attr(attr::ARRAY)) {
+        return ":p";
+    } else if(tree->has_attr(attr::STRUCT)) {
+        return ":p";
+    } else if(tree->has_attr(attr::STRING)) {
+        return ":p";
+    } else if(tree->has_attr(attr::INT)) {
+        return ":i";
+    } else {
+        return "ERR";
     }
 }
 

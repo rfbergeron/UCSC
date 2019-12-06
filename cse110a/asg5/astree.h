@@ -30,6 +30,7 @@ struct astree {
    // Fields.
    int symbol;                   // token code
    location loc;                 // source location
+   location decl_loc;            // for identies declaration location
    const string* lexinfo;        // pointer to lexical information
    vector<astree*> children;     // children of this n-way node
    astree* next_sibling;         // for adopting long lists of siblings
