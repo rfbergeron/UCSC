@@ -120,16 +120,22 @@ vector<symbol_entry> type_checker::sort_symtable(symbol_table* table) {
             if(in_sorted) continue;
             if(min_lloc == nullptr) min_lloc = &entry;
 
-            if(entry.second->lloc.filenr < min_lloc->second->lloc.filenr) {
+            if(entry.second->lloc.filenr < min_lloc->second->
+                  lloc.filenr) {
                 min_lloc = &entry;
             } else if(
-                    entry.second->lloc.filenr == min_lloc->second->lloc.filenr &&
-                    entry.second->lloc.linenr < min_lloc->second->lloc.linenr) {
+                    entry.second->lloc.filenr == min_lloc->second->
+                    lloc.filenr &&
+                    entry.second->lloc.linenr < min_lloc->second->
+                    lloc.linenr) {
                 min_lloc = &entry;
             } else if(
-                    entry.second->lloc.filenr == min_lloc->second->lloc.filenr &&
-                    entry.second->lloc.linenr == min_lloc->second->lloc.linenr &&
-                    entry.second->lloc.offset <= min_lloc->second->lloc.offset) {
+                    entry.second->lloc.filenr == min_lloc->second->
+                    lloc.filenr &&
+                    entry.second->lloc.linenr == min_lloc->second->
+                    lloc.linenr &&
+                    entry.second->lloc.offset <= min_lloc->second->
+                    lloc.offset) {
                 min_lloc = &entry;
             }
         }
@@ -473,7 +479,8 @@ int type_checker::validate_stmt_expr(astree* statement,
             status = validate_stmt_expr(statement->second(),
                     function_name, sequence_nr);
             if(status != 0) return status;
-            if(!types_compatible(statement->first(), statement->second())) {
+            if(!types_compatible(statement->first(),
+                     statement->second())) {
                 cerr << "ERROR: Incompatible types for tokens: "
                      << parser::get_tname(statement->first()->symbol)
                      << " " << parser::get_tname(statement->second()->
@@ -508,13 +515,15 @@ int type_checker::validate_stmt_expr(astree* statement,
             status = validate_stmt_expr(statement->second(),
                     function_name, sequence_nr);
             if(status != 0) return status;
-            if(!types_compatible(statement->first(), statement->second())) {
+            if(!types_compatible(statement->first(),
+                     statement->second())) {
                 cerr << "ERROR: Incompatible types for operator: "
                      << statement->symbol << endl;
                 return -1;
             } else if(!statement->first()->attributes.test(
                 (size_t)attr::INT)) {
-                cerr << "ERROR: Operator " << (char)statement->symbol
+                cerr << "ERROR: Operator "
+                     << static_cast<char>(statement->symbol)
                      << " must have operands of type int" << endl;
                 return -1;
             }
@@ -526,7 +535,8 @@ int type_checker::validate_stmt_expr(astree* statement,
             status = validate_stmt_expr(statement->first(),
                     function_name, sequence_nr);
             if(status != 0) return status;
-            if(!statement->first()->attributes.test((size_t)attr::INT)) {
+            if(!statement->first()->attributes.test(
+                     (size_t)attr::INT)) {
                 cerr << "ERROR: '" << *(statement->lexinfo)
                      << "' argument must be of type int" << endl;
                 return -1;
@@ -586,7 +596,8 @@ int type_checker::validate_stmt_expr(astree* statement,
                 symbol_value* struct_def = type_names->at(statement->
                         first()->type_id);
                 if(struct_def->fields->find(statement->
-                        second()->lexinfo) != struct_def->fields->end()) {
+                        second()->lexinfo) !=
+                        struct_def->fields->end()) {
                     symbol_value* field_def = struct_def->fields->
                             at(statement->second()->lexinfo);
                     assign_type(statement->second(), field_def);
@@ -599,7 +610,8 @@ int type_checker::validate_stmt_expr(astree* statement,
                     return -1;
                 }
             } else {
-                cerr << "ERROR: structure " << *(statement->first()->type_id)
+                cerr << "ERROR: structure "
+                     << *(statement->first()->type_id)
                      << " not defined for token "
                      << *(statement->first()->lexinfo) << endl;
                 return -1;
@@ -770,7 +782,8 @@ bool type_checker::functions_equal(symbol_value* f1, symbol_value* f2) {
     return true;
 }
 
-bool type_checker::types_compatible(symbol_value* v1, symbol_value* v2) {
+bool type_checker::types_compatible(symbol_value* v1,
+      symbol_value* v2) {
     return types_compatible(v1->attributes, v2->attributes);
 }
 

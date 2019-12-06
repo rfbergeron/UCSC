@@ -16,7 +16,7 @@ GMAKE = ${MAKE} --no-print-directory
 EXECNAME = oc
 # .cpp source files
 CPPSRC = main.cpp auxlib.cpp string_set.cpp astree.cpp lyutils.cpp \
-		 symtable.cpp intlang.cpp
+      symtable.cpp intlang.cpp
 # .h header files
 HEADERS = auxlib.h string_set.h astree.h lyutils.h symtable.h intlang.h
 # .gch header somethings?
@@ -52,7 +52,7 @@ yyparse.h yyparse.cpp : parser.y
 
 rmtest :
 	rm -f *.str *.tok *.ast *.sym *.oil *.err *.out *.log \
-		*.lexyacctrace
+      *.lexyacctrace
 
 clean :
 	rm -f ${OBJECTS} ${GCH} ${DEPFILE} ${GENS} ${HEADERGENS} \
@@ -63,7 +63,8 @@ submit:
       ${HEADERS} scanner.l parser.y
 
 ci :
-	git add ${HEADERS} ${CPPSRC} ${MKFILE} scanner.l parser.y README DESIGN.md
+	git add ${HEADERS} ${CPPSRC} ${MKFILE} scanner.l parser.y \
+      README DESIGN.md
 
 spotless : clean rmtest
 	rm -f ${EXECNAME}

@@ -48,7 +48,7 @@ program     : program structdef              { $$ = $1->adopt($2); }
                                                parser::newroot(); }
             ;
 structdef   : TOK_STRUCT TOK_IDENT 
-              '{' structbody '}' ';'         { $$ = $1->adopt($2, $4); } 
+              '{' structbody '}' ';'         { $$ = $1->adopt($2, $4); }
             | TOK_STRUCT TOK_IDENT
               '{' '}' ';'                    { $$ = $1->adopt($2); }
             ;

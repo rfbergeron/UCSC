@@ -308,7 +308,7 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             DEBUGH('l', "Expression is index");
             array = write_stmt_expr(expr->first(), label);
             index = write_stmt_expr(expr->second(), label);
-            // TODO: mult index by typesize of array
+            // TODO(rbergero): mult index by typesize of array
             ret += array + "[" + index + " * :X]";
             if(return_compound) {
                 return ret;
