@@ -47,7 +47,7 @@ class generator {
         }
 #define IDLABEL(LABEL,CODE) { \
             *out << setw(10) << *NO_LABEL << LABEL \
-            << CODE << endl; \
+                 << CODE << endl; \
         }
 #define INDENT(CODE) { \
             *out << setw(10) << *NO_LABEL << CODE << endl; \

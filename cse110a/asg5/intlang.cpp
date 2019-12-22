@@ -170,6 +170,7 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
     string skip_label;
     string else_label;
     size_t current_branch;
+    bool do_compound;
     vector<string> param_strings;
     switch(expr->symbol) {
         case TOK_EQ:
@@ -225,9 +226,23 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             }
             break;
         case '=':
+            /* We cannot put the destination returned by the index
+             * and arrow operators into a register and then assign
+             * values to that destination; it must be the immediate
+             * value on the left hand side of an assignment operator.
+             * So, if the lhs is an arrow or index, the rhs must be
+             * a simple expression (const value or register).
+             *
+             * If the rhs is also an index or arrow, that is fine;
+             * extract the value, put it in a register, and assign.
+             */
             DEBUGH('l', "Expression is assignment");
-            destination = write_stmt_expr(expr->first(), label, true);
-            source = write_stmt_expr(expr->second(), label, true);
+            do_compound = (expr->first()->symbol == TOK_INDEX) ||
+                          (expr->first()->symbol == TOK_ARROW);
+            destination = write_stmt_expr(expr->first(), label,
+                    do_compound);
+            source = write_stmt_expr(expr->second(), label,
+                    not do_compound);
 
             WRLABEL(*label, destination << " = " << source);
             if(label != NO_LABEL) label = NO_LABEL;
@@ -255,11 +270,12 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
                 size = "$t" + to_string(vreg_count++) + ":i";
 
                 if(expr->has_attr(attr::STRUCT)) {
-                    left_operand = "sizeof ptr";
+                    left_operand = "sizeof struct ";
+                    left_operand += *(expr->type_id);
                 } else if(expr->has_attr(attr::INT)) {
                     left_operand = "sizeof int";
                 } else if(expr->has_attr(attr::STRING)) {
-                    left_operand = "sizeof ptr";
+                    left_operand = "sizeof void*";
                 } else {
                     left_operand = "ERR";
                 }
@@ -270,8 +286,11 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             } else if(expr->has_attr(attr::STRING)) {
                 size = write_stmt_expr(expr->second(), label);
             } else if(expr->has_attr(attr::STRUCT)) {
-                size = "sizeof struct ";
-                size += *(expr->first()->lexinfo);
+                size = "$t" + to_string(vreg_count++) + ":i";
+                right_operand = "sizeof struct ";
+                right_operand += *(expr->first()->lexinfo);
+                WRLABEL(*label, size << " = " << right_operand);
+                if(label != NO_LABEL) label = NO_LABEL;
             } else {
                 size = "ERR";
             }
@@ -292,7 +311,7 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             structure = write_stmt_expr(expr->first(), label);
             if(return_compound) {
                 return structure + "->" + *(expr->first()->type_id)
-                        + "::" + *(expr->second()->lexinfo);
+                    + "::" + *(expr->second()->lexinfo);
             } else {
                 destination = "$t" + to_string(vreg_count++);
                 destination += write_reg_type(expr->second());
@@ -324,7 +343,7 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             DEBUGH('l', "Expression is return");
             if(expr->children.size() == 1) {
                 ret += " ";
-                ret +=  write_stmt_expr(expr->first(), label, true);
+                ret +=  write_stmt_expr(expr->first(), label);
             }
             WRLABEL(*label, "return" << ret);
             if(label != NO_LABEL) label = NO_LABEL;
@@ -334,7 +353,7 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             DEBUGH('l', "Expression is a function call");
             for(size_t i = 1; i < expr->children.size(); ++i) {
                 param_strings.push_back(write_stmt_expr(
-                        expr->children[i], label));
+                            expr->children[i], label));
             }
             ret += *(expr->first()->lexinfo) + "(";
             for(size_t i = 0; i < param_strings.size(); ++i) {
@@ -363,13 +382,22 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             branch_label = ".wh" + to_string(current_branch) + ":";
             block_label = ".do" + to_string(current_branch) + ":";
             skip_label = ".od" + to_string(current_branch) + ":";
+
+            /* write out label for any previous branches that go
+             * immediately to another branch
+             */
+            if(label != NO_LABEL) WRLABEL(*label, "");
             label = &branch_label;
+            // children deal with labelling
             left_operand = write_stmt_expr(expr->first(), label);
-            INDENT("goto " << skip_label << " if ! " << left_operand);
+            WRLABEL(*label, "goto "
+                    << skip_label.substr(0, skip_label.length() - 1)
+                    << " if ! " << left_operand);
             // whatever this thing is, it should print itself out
             label = &block_label;
             write_stmt_expr(expr->second(), label);
-            INDENT("goto " << branch_label);
+            WRLABEL(*label, "goto "
+                    << branch_label.substr(0, branch_label.length() - 1));
             *out << skip_label << endl;
             return "";
         case TOK_IF:
@@ -380,22 +408,28 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             skip_label = ".fi" + to_string(current_branch) + ":";
             else_label = ".el" + to_string(current_branch) + ":";
 
+            /* write out label for any previous branches that go
+             * immediately to another branch
+             */
+            if(label != NO_LABEL) WRLABEL(*label, "");
             label = &branch_label;
             left_operand = write_stmt_expr(expr->first(), label);
             if(expr->children.size() == 3) {
-                INDENT("goto " << else_label << " if ! "
-                        << left_operand);
+                WRLABEL(*label, "goto "
+                        << else_label.substr(0, else_label.length() - 1)
+                        << " if ! " << left_operand);
             } else {
-                INDENT("goto " << skip_label << " if ! "
-                        << left_operand);
+                WRLABEL(*label, "goto "
+                        << skip_label.substr(0, skip_label.length() - 1)
+                        << " if ! " << left_operand);
             }
 
-            // don't have to deal with this
             label = &block_label;
             write_stmt_expr(expr->second(), label);
             if(expr->children.size() == 3) {
-                INDENT("goto " << skip_label);
-                // also don't need to deal with this
+                WRLABEL(*label, "goto "
+                        << skip_label.substr(0, skip_label.length() - 1));
+                // label is dealt with in children
                 label = &else_label;
                 write_stmt_expr(expr->third(), label);
             }
@@ -439,7 +473,7 @@ string generator::write_stmt_expr(astree* expr, const string*& label,
             break;        
         default:
             cerr << "UNIMPLEMENTED: " << parser::get_tname(expr->symbol)
-                 << " " << *(expr->lexinfo) << endl;
+                << " " << *(expr->lexinfo) << endl;
             return "ERR";
     }
 }
@@ -476,9 +510,10 @@ string generator::write_type(astree* tree) {
     } else if(tree->has_attr(attr::INT)) {
         return "int ";
     } else if(tree->has_attr(attr::VOID)) {
-        return "";
+        return "void ";
     } else if(tree->has_attr(attr::STRUCT)) {
-        return "struct " + *(tree->type_id) + " ";
+        //return "struct " + *(tree->type_id) + " ";
+        return "void* ";
     } else if(tree->has_attr(attr::STRING)) {
         return "void* ";
     } else {
@@ -493,9 +528,10 @@ string generator::write_type(symbol_value* value) {
     } else if(value->has_attr(attr::INT)) {
         return "int ";
     } else if(value->has_attr(attr::VOID)) {
-        return "";
+        return "void ";
     } else if(value->has_attr(attr::STRUCT)) {
-        return "struct " + *(value->type_id) + " ";
+        // return "struct " + *(value->type_id) + " ";
+        return "void* ";
     } else if(value->has_attr(attr::STRING)) {
         return "void* ";
     } else {
