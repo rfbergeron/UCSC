@@ -19,16 +19,15 @@ struct location {
 ostream& operator<< (ostream&, const location&);
 
 struct astree {
-
    // Fields.
-   int symbol;               // token code
-   location loc;             // source location
-   const string* lexinfo;    // pointer to lexical information
-   vector<astree*> children; // children of this n-way node
+   int symbol;                 // token code
+   location loc;               // source location
+   const string* lexinfo;      // pointer to lexical information
+   vector<astree*> children;   // children of this n-way node
 
    // Functions.
    astree (int symbol, const location&, const char* lexinfo);
-   ~astree();
+   ~astree ();
    astree* adopt (astree* child1, astree* child2 = nullptr);
    astree* adopt_sym (astree* child, int symbol);
    void dump_node (ostream&);
@@ -42,4 +41,3 @@ ostream& operator<< (ostream&, const astree*);
 void destroy (astree* tree1, astree* tree2 = nullptr);
 
 #endif
-

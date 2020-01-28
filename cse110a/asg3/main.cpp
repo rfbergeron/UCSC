@@ -1,18 +1,18 @@
-#include <iostream>
-#include <cstdlib>
-#include <string>
-#include <cstring>
-#include <iomanip>
-#include <fstream>
-#include <vector>
-
 #include <libgen.h>
 #include <unistd.h>
 
-#include "auxlib.h"
-#include "string_set.h"
-#include "lyutils.h"
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <vector>
+
 #include "astree.h"
+#include "auxlib.h"
+#include "lyutils.h"
+#include "string_set.h"
 #include "yyparse.h"
 
 const string CPP = "/usr/bin/cpp";
@@ -38,23 +38,25 @@ void chomp (char* string, char delim) {
 static string sig_text (int signal) {
    string sig_nr = to_string (signal);
    const char* sigstr = strsignal (signal);
-   if (sigstr == nullptr) return sig_nr;
-                     else return sig_nr + " (" + sigstr + ")";
+   if (sigstr == nullptr)
+      return sig_nr;
+   else
+      return sig_nr + " (" + sigstr + ")";
 }
 
 // Print the status returned from a subprocess.
 void cerr_status (const char* command, int status) {
-   if (status == 0) return; 
-   cerr << command << ": " << status << setw(4) << setfill('0')
-        << hex << status << setfill(' ') << dec;
+   if (status == 0) return;
+   cerr << command << ": " << status << setw (4) << setfill ('0') << hex
+        << status << setfill (' ') << dec;
    if (WIFEXITED (status)) {
       cerr << ", exit " << WEXITSTATUS (status);
    }
    if (WIFSIGNALED (status)) {
       cerr << ", Terminated signal " << sig_text (WTERMSIG (status));
-      #ifdef WCOREDUMP
+#ifdef WCOREDUMP
       if (WCOREDUMP (status)) cerr << ", core dumped";
-      #endif
+#endif
    }
    if (WIFSTOPPED (status)) {
       cerr << ", Stopped signal ", sig_text (WSTOPSIG (status));
@@ -75,34 +77,37 @@ string_set cpplines (FILE* pipe, const string& infile_path) {
       if (fgets_rc == nullptr) break;
       chomp (buffer, '\n');
       // http://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html
-      DEBUGS('d',
-      cout << "      " << infile_path << ":line " << linenr << ": ["
-           << buffer << "]" << endl;
-      char inputname[LINESIZE];
-      int sscanf_rc = sscanf (buffer, "# %d \"%[^\"]\"",
-                              &linenr, inputname);
-      if (sscanf_rc == 2) {
-         cout << "      DIRECTIVE: line " << linenr << " file \""
-              << inputname << "\"" << endl;
-         continue;
-      }
-      );
+      DEBUGS (
+            'd',
+            cout << "      " << infile_path << ":line " << linenr
+                 << ": [" << buffer << "]" << endl;
+            char inputname[LINESIZE];
+            int sscanf_rc = sscanf (buffer,
+                                    "# %d \"%[^\"]\"",
+                                    &linenr,
+                                    inputname);
+            if (sscanf_rc == 2) {
+               cout << "      DIRECTIVE: line " << linenr << " file \""
+                    << inputname << "\"" << endl;
+               continue;
+            });
       char* savepos = nullptr;
       char* bufptr = buffer;
       for (int tokenct = 1;; ++tokenct) {
          char* token = strtok_r (bufptr, " \t\n", &savepos);
          bufptr = nullptr;
          if (token == nullptr) break;
-         DEBUGH('d', "     token " << linenr << "." << tokenct << ": ["
-              << token << "]");
-         oc_set.intern(token);
+         DEBUGH ('d',
+                 "     token " << linenr << "." << tokenct << ": ["
+                               << token << "]");
+         oc_set.intern (token);
       }
       ++linenr;
    }
    return oc_set;
 }
 
-void scan_options(int argc, char** argv) { 
+void scan_options (int argc, char** argv) {
    opterr = 0;
    for (;;) {
       int option = getopt (argc, argv, "@:D:ly");
@@ -113,101 +118,98 @@ void scan_options(int argc, char** argv) {
             break;
          case 'D':
             // cpp args
-            DEBUGH('c', "     cpp option: " << optarg);
-            cpp_opts.append(" -D ").append(optarg);
+            DEBUGH ('c', "     cpp option: " << optarg);
+            cpp_opts.append (" -D ").append (optarg);
             break;
          case 'l':
-            DEBUGH('c', "     yy_flex_debug set to 1");
+            DEBUGH ('c', "     yy_flex_debug set to 1");
             yy_flex_debug = 1;
             break;
          case 'y':
-            DEBUGH('c', "     yydebug set to 1");
+            DEBUGH ('c', "     yydebug set to 1");
             yydebug = 1;
             break;
          default:
-            cerr << "-" << char (optopt) << ": invalid option"
-               << endl;
+            cerr << "-" << char (optopt) << ": invalid option" << endl;
             break;
       }
    }
 }
 
-void dump_astrees(vector<astree*> trees, ostream& out) {
+void dump_astrees (vector<astree*> trees, ostream& out) {
    size_t current_filenr = 0;
-   for(const auto& tree : trees) {
-      while(tree->loc.filenr >= current_filenr) {
-         out << "# " << setw(2) << lexer::include_linenr(current_filenr)
-               << " " << *lexer::filename(current_filenr) << endl;
+   for (const auto& tree : trees) {
+      while (tree->loc.filenr >= current_filenr) {
+         out << "# " << setw (2)
+             << lexer::include_linenr (current_filenr) << " "
+             << *lexer::filename (current_filenr) << endl;
          ++current_filenr;
       }
-      out << "  " << setw(2) << tree->loc.filenr << "  " << setw(3)
-            << tree->loc.linenr << "." << setw(3) << setfill('0')
-            << tree->loc.offset << " " << setw(3) << setfill(' ')
-            << tree->symbol << " " << setw(13) << left
-            << parser::get_tname(tree->symbol) << right << " "
-            << *(tree->lexinfo) << endl;
-    }
+      out << "  " << setw (2) << tree->loc.filenr << "  " << setw (3)
+          << tree->loc.linenr << "." << setw (3) << setfill ('0')
+          << tree->loc.offset << " " << setw (3) << setfill (' ')
+          << tree->symbol << " " << setw (13) << left
+          << parser::get_tname (tree->symbol) << right << " "
+          << *(tree->lexinfo) << endl;
+   }
 }
 
-int main(int argc, char** argv) {
+int main (int argc, char** argv) {
    yydebug = 0;
    yy_flex_debug = 0;
-   scan_options(argc, argv);
-   ios_base::sync_with_stdio(true);
+   scan_options (argc, argv);
+   ios_base::sync_with_stdio (true);
    // calls to getopt increment optind, so after scan_options returns
    // we should be at the name of the target file.
-   DEBUGH('a', "     oc program infile_path: " << argv[optind]);
-   DEBUGH('a', "     CPP exec: " << CPP << cpp_opts);
+   DEBUGH ('a', "     oc program infile_path: " << argv[optind]);
+   DEBUGH ('a', "     CPP exec: " << CPP << cpp_opts);
 
-   string oc_name { basename(argv[optind]) };
-   size_t ext_index = oc_name.rfind(OC_EXT);
-   if(ext_index == string::npos ||
-         OC_EXT.compare(oc_name.substr(ext_index))) {
-      cerr << "not an .oc file: " << oc_name << " " <<
-         oc_name.substr(ext_index) << endl;
+   string oc_name {basename (argv[optind])};
+   size_t ext_index = oc_name.rfind (OC_EXT);
+   if (ext_index == string::npos ||
+       OC_EXT.compare (oc_name.substr (ext_index))) {
+      cerr << "not an .oc file: " << oc_name << " "
+           << oc_name.substr (ext_index) << endl;
       return EXIT_FAILURE;
    }
 
-   string base_name = oc_name.substr(0, ext_index);
+   string base_name = oc_name.substr (0, ext_index);
    string str_name = base_name + STR_EXT;
    string tok_name = base_name + TOK_EXT;
    string ast_name = base_name + AST_EXT;
-   DEBUGH('a', "     output names: " << str_name << " " << tok_name);
+   DEBUGH ('a', "     output names: " << str_name << " " << tok_name);
 
-   strfile.open(str_name.c_str());
-   if((strfile.rdstate() & ofstream::failbit) != 0) {
-      cerr << "failed to open file for writing: "
-            << str_name << endl;
+   strfile.open (str_name.c_str ());
+   if ((strfile.rdstate () & ofstream::failbit) != 0) {
+      cerr << "failed to open file for writing: " << str_name << endl;
       return EXIT_FAILURE;
    }
 
-   tokfile.open(tok_name.c_str());
-   if((tokfile.rdstate() & ofstream::failbit) != 0) {
-      cerr << "failed to open file for writing: "
-            << tok_name << endl;
+   tokfile.open (tok_name.c_str ());
+   if ((tokfile.rdstate () & ofstream::failbit) != 0) {
+      cerr << "failed to open file for writing: " << tok_name << endl;
       return EXIT_FAILURE;
    }
 
-   astfile.open(ast_name.c_str());
-   if((astfile.rdstate() & ofstream::failbit) != 0) {
-      cerr << "failed to open file for writing: "
-            << ast_name << endl;
+   astfile.open (ast_name.c_str ());
+   if ((astfile.rdstate () & ofstream::failbit) != 0) {
+      cerr << "failed to open file for writing: " << ast_name << endl;
       return EXIT_FAILURE;
    }
 
    string command = CPP + cpp_opts + " " + oc_name;
-   FILE* pipe = popen(command.c_str(), "r");
-   yyin = popen(command.c_str(), "r");
-   if(pipe == nullptr || yyin == nullptr ) {
+   FILE* pipe = popen (command.c_str (), "r");
+   yyin = popen (command.c_str (), "r");
+   if (pipe == nullptr || yyin == nullptr) {
       cerr << "failed to open pipe for command: " << command << endl;
       return EXIT_FAILURE;
    } else {
-      DEBUGH('s', "  creating oc set");
-      string_set oc_set = cpplines(pipe, oc_name);
-      DEBUGH('s', "  dumping oc set");
-      oc_set.dump(strfile);
-      int pclose_status = pclose(pipe);
-      cerr_status (command.c_str(), pclose_status);
+      DEBUGH ('s', "  creating oc set");
+      string_set oc_set = cpplines (pipe, oc_name);
+      DEBUGH ('s', "  dumping oc set");
+      oc_set.dump (strfile);
+      int pclose_status = pclose (pipe);
+      cerr_status (command.c_str (), pclose_status);
 
       /*vector<astree*> tokens;
       int currtok = 0;
@@ -220,21 +222,20 @@ int main(int argc, char** argv) {
       DEBUGH('t', "  dumping scanner");
       dump_astrees(tokens, tokfile);*/
       // here goes nothing
-      DEBUGH('y', "  activating bison");
-      int parse_status = yyparse();
+      DEBUGH ('y', "  activating bison");
+      int parse_status = yyparse ();
 
-      if(parse_status == 0) {
-         DEBUGH('y', "  bison parse was successful");
-         astree::print(astfile, parser::root, 0); 
+      if (parse_status == 0) {
+         DEBUGH ('y', "  bison parse was successful");
+         astree::print (astfile, parser::root, 0);
+      } else {
+         cerr << "Parsing failed with status " << parse_status << endl;
       }
-      else {
-        cerr << "Parsing failed with status " << parse_status << endl;  
-      }
-      pclose_status = pclose(yyin);
-      cerr_status (command.c_str(), pclose_status);
-      strfile.close();
-      tokfile.close();
-      astfile.close();
+      pclose_status = pclose (yyin);
+      cerr_status (command.c_str (), pclose_status);
+      strfile.close ();
+      tokfile.close ();
+      astfile.close ();
       return EXIT_SUCCESS;
    }
 }

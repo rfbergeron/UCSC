@@ -69,6 +69,9 @@ spotless : clean rmtest
 deps : ${CPPSRC} ${GENS}
 	${DEPCPP} ${CPPSRC} ${GENS} ${MKFILE} >> ${DEPFILE}
 
+format :
+	clang-format --style=file -i ${CPPSRC} ${HEADERS}
+
 ${DEPFILE} :
 	@ touch ${DEPFILE}
 	${GMAKE} deps

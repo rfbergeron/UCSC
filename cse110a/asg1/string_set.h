@@ -10,12 +10,12 @@ using namespace std;
 
 class string_set {
    private:
-      static unordered_set<string> set;
+   static unordered_set<string> set;
+
    public:
-      string_set();
-      static const string* intern (const char*);
-      static void dump (ostream&);
+   string_set ();
+   static const string* intern (const char*);
+   static void dump (ostream&);
 };
 
 #endif
-

@@ -29,7 +29,7 @@ struct exit_error: public exception {
    exit_error (int);
 };
 
-ostream& error();
+ostream& error ();
 
 void eprint_status (const char* command, int status);
 // Print the status returned by wait(2) from a subprocess.
@@ -45,14 +45,17 @@ void eprint_status (const char* command, int status);
 
 class debug {
    private:
-      using flagset = bitset<UCHAR_MAX + 1>;
-      static flagset flags;
+   using flagset = bitset<UCHAR_MAX + 1>;
+   static flagset flags;
+
    public:
-      static void setflags (const string& optflags);
-      static bool getflag (char flag);
-      static void where (char flag, const char* file, int line,
-                         const char* pretty_function);
-      static void where_short (char flag, const char* file, int line);
+   static void setflags (const string& optflags);
+   static bool getflag (char flag);
+   static void where (char flag,
+                      const char* file,
+                      int line,
+                      const char* pretty_function);
+   static void where_short (char flag, const char* file, int line);
 };
 
 // DEBUGF -
@@ -69,39 +72,40 @@ class debug {
 //    long __PRETTY_FUNCTION__ macro
 
 #ifdef NDEBUG
-#define DEBUGF(FLAG,CODE) ;
-#define DEBUGS(FLAG,STMT) ;
-#define DEBUGH(FLAG,CODE) ;
+#define DEBUGF(FLAG, CODE) ;
+#define DEBUGS(FLAG, STMT) ;
+#define DEBUGH(FLAG, CODE) ;
 #else
-#define DEBUGF(FLAG,CODE) { \
-           if (debug::getflag (FLAG)) { \
-              debug::where (FLAG, __FILE__, __LINE__, \
-                                 __PRETTY_FUNCTION__); \
-              cerr << CODE << endl; \
-           } \
-        }
-#define DEBUGS(FLAG,STMT) { \
-           if (debug::getflag (FLAG)) { \
-              debug::where (FLAG, __FILE__, __LINE__, \
-                                 __PRETTY_FUNCTION__); \
-              STMT; \
-           } \
-        }
-#define DEBUGH(FLAG,CODE) { \
-           if (debug::getflag (FLAG)) { \
-              debug::where_short(FLAG, __FILE__, __LINE__); \
-              cerr << CODE << endl; \
-           } \
-        }
+#define DEBUGF(FLAG, CODE)                                             \
+   {                                                                   \
+      if (debug::getflag (FLAG)) {                                     \
+         debug::where (FLAG, __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+         cerr << CODE << endl;                                         \
+      }                                                                \
+   }
+#define DEBUGS(FLAG, STMT)                                             \
+   {                                                                   \
+      if (debug::getflag (FLAG)) {                                     \
+         debug::where (FLAG, __FILE__, __LINE__, __PRETTY_FUNCTION__); \
+         STMT;                                                         \
+      }                                                                \
+   }
+#define DEBUGH(FLAG, CODE)                                             \
+   {                                                                   \
+      if (debug::getflag (FLAG)) {                                     \
+         debug::where_short (FLAG, __FILE__, __LINE__);                \
+         cerr << CODE << endl;                                         \
+      }                                                                \
+   }
 #endif
 
 //
 // Support for stub messages.
 //
-#define STUB(CODE) { \
-           debug::where (__FILE__, __LINE__, __PRETTY_FUNCTION__); \
-           cerr << CODE << endl; \
-        }
+#define STUB(CODE)                                                     \
+   {                                                                   \
+      debug::where (__FILE__, __LINE__, __PRETTY_FUNCTION__);          \
+      cerr << CODE << endl;                                            \
+   }
 
 #endif
-

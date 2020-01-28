@@ -16,7 +16,7 @@ exit_error::exit_error (int status) {
    if (exec::exit_status < status) exec::exit_status = status;
 }
 
-ostream& error() {
+ostream& error () {
    exec::exit_status = EXIT_FAILURE;
    return cerr << exec::execname << ": ";
 }
@@ -28,20 +28,20 @@ void cerr_signal (int signal) {
 }
 
 void eprint_status (const char* command, int status) {
-   if (status == 0) return; 
+   if (status == 0) return;
    ostringstream hexcode;
-   hexcode << "0x" << hex << uppercase << setfill('0')
-           << setw(4) << status;
-   cerr << command << ": status " << hexcode.str();
+   hexcode << "0x" << hex << uppercase << setfill ('0') << setw (4)
+           << status;
+   cerr << command << ": status " << hexcode.str ();
    if (WIFEXITED (status)) {
       cerr << ", exit " << WEXITSTATUS (status);
    }
    if (WIFSIGNALED (status)) {
       cerr << ", Terminated via signal ";
       cerr_signal (WTERMSIG (status));
-      #ifdef WCOREDUMP
+#ifdef WCOREDUMP
       if (WCOREDUMP (status)) cerr << ", core dumped";
-      #endif
+#endif
    }
    if (WIFSTOPPED (status)) {
       cerr << ", Stopped via signal ";
@@ -56,9 +56,11 @@ void eprint_status (const char* command, int status) {
 debug::flagset debug::flags {};
 
 void debug::setflags (const string& initflags) {
-   for (const unsigned char flag: initflags) {
-      if (flag == '@') flags.set();
-                  else flags.set (flag, true);
+   for (const unsigned char flag : initflags) {
+      if (flag == '@')
+         flags.set ();
+      else
+         flags.set (flag, true);
    }
 }
 
@@ -70,16 +72,16 @@ bool debug::getflag (char flag) {
    return flags.test (static_cast<unsigned char> (flag));
 }
 
-void debug::where (char flag, const char* file, int line,
-                        const char* pretty_function) {
-   cerr << exec::execname << ": DEBUG(" << flag << ") "
-        << file << "[" << line << "] " << endl
+void debug::where (char flag,
+                   const char* file,
+                   int line,
+                   const char* pretty_function) {
+   cerr << exec::execname << ": DEBUG(" << flag << ") " << file << "["
+        << line << "] " << endl
         << pretty_function << endl;
 }
 
 void debug::where_short (char flag, const char* file, int line) {
-   cerr << exec::execname << ": DEBUG(" << flag << ") "
-        << file << "[" << line << "] " << endl;
+   cerr << exec::execname << ": DEBUG(" << flag << ") " << file << "["
+        << line << "] " << endl;
 }
-
-

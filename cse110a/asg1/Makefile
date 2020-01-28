@@ -43,6 +43,9 @@ spotless : clean
 deps : ${CPPSRC}
 	${DEPCPP} ${HEADERS} ${CPPSRC} ${MKFILE} >> ${DEPFILE}
 
+format :
+	clang-format --style=file -i ${CPPSRC} ${HEADERS}
+
 ${DEPFILE} :
 	@ touch ${DEPFILE}
 	${GMAKE} deps
