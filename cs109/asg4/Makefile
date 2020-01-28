@@ -11,7 +11,7 @@ FORMATCPP   = clang-format --style=file -i
 GPPWARN     = -Wall -Wextra -Werror -Wpedantic -Wshadow -Wold-style-cast
 GPPOPTS     = ${GPPWARN} -fdiagnostics-color=never
 COMPILECPP  = g++ -std=gnu++17 -g -O0 ${GPPOPTS}
-MAKEDEPCPP  = g++ -std=gnu++17 -MM ${GPPOPTS}
+MAKEDEPCPP  = g++ -std=gnu++17 -MM
 
 MODULES     = debug logstream protocol sockets
 EXECBINS    = ${CIXEXEC} ${CIXDEXEC}
@@ -27,7 +27,7 @@ CIXDOBJS    = cixd.o ${OBJLIBS}
 CLEANOBJS   = ${OBJLIBS} ${CIXOBJS} ${CIXDOBJS}
 LISTING     = Listing.ps
 
-all: ${DEPFILE} ${EXECBINS}
+all: ${EXECBINS}
 
 cix: ${CIXOBJS}
 	${COMPILECPP} -o $@ ${CIXOBJS}
@@ -47,9 +47,9 @@ clean:
 spotless: clean
 	- rm -f ${EXECBINS} ${DEPFILE}
 
-dep: ${ALLCPPSRC}
+dep: ${wildcard ${SOURCELIST}}
 	@ echo "# ${DEPFILE} created `LC_TIME=C date`" >${DEPFILE}
-	${MAKEDEPCPP} ${ALLSOURCE} >>${DEPFILE}
+	${MAKEDEPCPP} ${wildcard ${SOURCELIST}} >>${DEPFILE}
 
 ${DEPFILE}:
 	@ touch ${DEPFILE}

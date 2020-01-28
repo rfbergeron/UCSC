@@ -12,7 +12,6 @@ GPPWARN     = -Wall -Wextra -Werror -Wpedantic -Wshadow -Wold-style-cast
 GPPOPTS     = ${GPPWARN} -fdiagnostics-color=never
 COMPILECPP  = g++ -std=gnu++17 -g -O0 ${GPPOPTS}
 MAKEDEPCPP  = g++ -std=gnu++17 -MM ${GPPOPTS}
-UTILBIN     = /afs/cats.ucsc.edu/courses/cmps109-wm/bin
 
 MODULES    = graphics interp rgbcolor shape debug util main
 CPPSOURCE  = $(wildcard ${MODULES:=.cpp})
@@ -33,17 +32,12 @@ ${EXECBIN} : ${OBJECTS}
 
 %.o : %.cpp
 	${COMPILECPP} -c $<
-	- ${UTILBIN}/checksource $<
-	- ${UTILBIN}/cpplint.py.perl $<
 
 colors.cppgen: mk-colors.perl
 	perl mk-colors.perl >colors.cppgen
 
 ci : ${ALLSOURCES}
 	- git add ${SOURCES} ${MKFILE}
-
-lis : ${ALLSOURCES}
-	${UTILBIN}/mkpspdf ${LISTING} ${ALLSOURCES}
 
 clean :
 	- rm -f ${OBJECTS} ${DEPFILE} core ${GENFILES}
@@ -60,7 +54,7 @@ ${DEPFILE} :
 	${GMAKE} dep
 
 again :
-	${GMAKE} spotless dep ci all lis
+	${GMAKE} spotless dep ci all
 
 format :
 	${FORMATCPP} ${SOURCES}

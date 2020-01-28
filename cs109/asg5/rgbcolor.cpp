@@ -10,9 +10,11 @@
 #include <vector>
 using namespace std;
 
+// clang-format off
 #include "debug.h"
 #include "rgbcolor.h"
 #include "colors.cppgen"
+// clang-format on
 
 rgbcolor::rgbcolor (const string& name) {
    DEBUGF ('z', "getting color " << name << "from map");
