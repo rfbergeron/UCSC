@@ -1,7 +1,0 @@
-# This is a comment test
-Test to find the # character pos
-This is a test
-key key key = value value value
-key only =
-= value only
- 

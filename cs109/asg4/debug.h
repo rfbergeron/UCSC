@@ -1,5 +1,5 @@
+// John Gnanasekaran (jgnanase) and Robert Bergeron (rbergero)
 // $Id: debug.h,v 1.1 2018-01-25 14:09:09-08 - - $
-// John Gnanasekaran(jgnanase) and Robert Bergeron (rbergero)
 
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
@@ -27,10 +27,6 @@ class debugflags {
    public:
    static void setflags (const string& optflags);
    static bool getflag (char flag);
-   static void where (char flag,
-                      const char* file,
-                      int line,
-                      const char* pretty_function);
 };
 
 // DEBUGF -
@@ -46,25 +42,17 @@ class debugflags {
 #define DEBUGF(FLAG, CODE) ;
 #define DEBUGS(FLAG, STMT) ;
 #else
-#define DEBUGF(FLAG, CODE)                        \
-   {                                              \
-      if (debugflags::getflag (FLAG)) {           \
-         debugflags::where (FLAG,                 \
-                            __FILE__,             \
-                            __LINE__,             \
-                            __PRETTY_FUNCTION__); \
-         cerr << CODE << endl;                    \
-      }                                           \
+#define DEBUGF(FLAG, CODE)              \
+   {                                    \
+      if (debugflags::getflag (FLAG)) { \
+         cerr << CODE << endl;          \
+      }                                 \
    }
-#define DEBUGS(FLAG, STMT)                        \
-   {                                              \
-      if (debugflags::getflag (FLAG)) {           \
-         debugflags::where (FLAG,                 \
-                            __FILE__,             \
-                            __LINE__,             \
-                            __PRETTY_FUNCTION__); \
-         STMT;                                    \
-      }                                           \
+#define DEBUGS(FLAG, STMT)              \
+   {                                    \
+      if (debugflags::getflag (FLAG)) { \
+         STMT;                          \
+      }                                 \
    }
 #endif
 

@@ -1,4 +1,5 @@
 // $Id: debug.cpp,v 1.2 2018-01-25 14:12:59-08 - - $
+// John Gnanasekaran(jgnanase) and Robert Bergeron (rbergero)
 
 #include <climits>
 #include <iostream>
@@ -12,9 +13,11 @@ using namespace std;
 debugflags::flagset debugflags::flags {};
 
 void debugflags::setflags (const string& initflags) {
-   for (const unsigned char flag: initflags) {
-      if (flag == '@') flags.set();
-                  else flags.set (flag, true);
+   for (const unsigned char flag : initflags) {
+      if (flag == '@')
+         flags.set ();
+      else
+         flags.set (flag, true);
    }
 }
 
@@ -26,10 +29,11 @@ bool debugflags::getflag (char flag) {
    return flags.test (static_cast<unsigned char> (flag));
 }
 
-void debugflags::where (char flag, const char* file, int line,
+void debugflags::where (char flag,
+                        const char* file,
+                        int line,
                         const char* pretty_function) {
-   cout << sys_info::execname() << ": DEBUG(" << flag << ") "
-        << file << "[" << line << "] " << endl
+   cout << sys_info::execname () << ": DEBUG(" << flag << ") " << file
+        << "[" << line << "] " << endl
         << "   " << pretty_function << endl;
 }
-

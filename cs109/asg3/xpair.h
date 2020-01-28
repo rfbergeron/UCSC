@@ -16,20 +16,25 @@ using namespace std;
 // First and Second do so with their default ctors.
 //
 
-template <typename First, typename Second>
+template<typename First, typename Second>
 struct xpair {
-   First first{};
-   Second second{};
-   xpair(){}
+   First first {};
+   Second second {};
+   xpair () {}
    xpair (const First& first, const Second& second):
-               first(first), second(second) {}
+         first (first),
+         second (second) {}
 };
 
-template <typename First, typename Second>
-ostream& operator<< (ostream& out, const xpair<First,Second>& pair) {
-   out << "{" << pair.first << "," << pair.second << "}";
+template<typename First, typename Second>
+ostream& operator<< (ostream& out, const xpair<First, Second>& pair) {
+   out << pair.first << " = " << pair.second;
    return out;
 }
 
-#endif
+/*template <typename First, typename Second>
+bool operator< (const xpair& that) {
+   return this->first < that.first;
+}*/
 
+#endif

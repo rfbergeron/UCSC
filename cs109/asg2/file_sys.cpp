@@ -19,30 +19,23 @@ struct file_type_hash {
 };
 
 ostream& operator<< (ostream& out, file_type type) {
-   static unordered_map<file_type,string,file_type_hash> hash {
-      {file_type::PLAIN_TYPE, "PLAIN_TYPE"},
-      {file_type::DIRECTORY_TYPE, "DIRECTORY_TYPE"},
+   static unordered_map<file_type, string, file_type_hash> hash {
+         {file_type::PLAIN_TYPE, "PLAIN_TYPE"},
+         {file_type::DIRECTORY_TYPE, "DIRECTORY_TYPE"},
    };
    return out << hash[type];
 }
 
-void inode_state::set_prompt(string update_prompt){
+void inode_state::set_prompt (string update_prompt) {
    prompt_ = update_prompt;
 }
 
+const string& inode_state::prompt () const { return prompt_; }
 
-const string& inode_state::prompt() const { return prompt_; }
+inode_ptr inode_state::get_root () const { return root; }
+inode_ptr inode_state::get_cwd () const { return cwd; }
 
-inode_ptr inode_state::get_root() const {
-   return root;
-}
-inode_ptr inode_state::get_cwd() const {
-   return cwd;
-}
-
-base_file_ptr inode::get_contents() const {
-   return contents;
-}
+base_file_ptr inode::get_contents () const { return contents; }
 
 ostream& operator<< (ostream& out, const inode_state& state) {
    out << "inode_state: root = " << state.root
@@ -51,55 +44,52 @@ ostream& operator<< (ostream& out, const inode_state& state) {
 }
 
 // inode constructor; creates shared pointer for contents
-inode::inode(file_type type): inode_nr (next_inode_nr++) {
+inode::inode (file_type type): inode_nr (next_inode_nr++) {
    switch (type) {
       case file_type::PLAIN_TYPE:
-           contents = make_shared<plain_file>();
-           break;
+         contents = make_shared<plain_file> ();
+         break;
       case file_type::DIRECTORY_TYPE:
-           contents = make_shared<directory>(nullptr);
-           break;
+         contents = make_shared<directory> (nullptr);
+         break;
    }
    DEBUGF ('i', "inode " << inode_nr << ", type = " << type);
 }
 
 // inode constructor that takes a pointer to parent inode;
 // needed for directory .. entry
-inode::inode(file_type type, inode_ptr parent): inode_nr (next_inode_nr++) {
+inode::inode (file_type type, inode_ptr parent):
+      inode_nr (next_inode_nr++) {
    switch (type) {
       case file_type::PLAIN_TYPE:
-           contents = make_shared<plain_file>();
-           break;
+         contents = make_shared<plain_file> ();
+         break;
       case file_type::DIRECTORY_TYPE:
-           contents = make_shared<directory>(parent);
-           break;
+         contents = make_shared<directory> (parent);
+         break;
    }
    DEBUGF ('i', "inode " << inode_nr << ", type = " << type);
 }
 
-int inode::get_inode_nr() const {
+int inode::get_inode_nr () const {
    DEBUGF ('i', "inode = " << inode_nr);
    return inode_nr;
 }
 
-file_type inode::get_content_type() const {
-   return content_type;
-}
+file_type inode::get_content_type () const { return content_type; }
 
-file_error::file_error (const string& what):
-            runtime_error (what) {
-}
+file_error::file_error (const string& what): runtime_error (what) {}
 
-size_t plain_file::size() const {
+size_t plain_file::size () const {
    size_t size {0};
-   for(string token : data) {
-      size += token.length();
+   for (string token : data) {
+      size += token.length ();
    }
    DEBUGF ('i', "size = " << size);
    return size;
 }
 
-const wordvec& plain_file::readfile() const {
+const wordvec& plain_file::readfile () const {
    DEBUGF ('i', data);
    return data;
 }
@@ -122,18 +112,18 @@ inode_ptr plain_file::mkfile (const string&) {
 }
 
 // creates a directory and sets . and .. entries automatically
-directory::directory(inode_ptr parent) {
+directory::directory (inode_ptr parent) {
    dirents["."] = nullptr;
    dirents[".."] = parent;
 }
 
-size_t directory::size() const {
-   size_t size = static_cast<size_t>(dirents.size());
+size_t directory::size () const {
+   size_t size = static_cast<size_t> (dirents.size ());
    DEBUGF ('i', "size = " << size);
    return size;
 }
 
-const wordvec& directory::readfile() const {
+const wordvec& directory::readfile () const {
    throw file_error ("is a directory");
 }
 
@@ -142,44 +132,44 @@ void directory::writefile (const wordvec&) {
 }
 
 void directory::remove (const string& filename) {
-   inode_ptr target = dirents.at(filename);
-   if(target != nullptr) {
-      if(target->get_content_type() == file_type::DIRECTORY_TYPE) {
-         base_file * target_file = (target->get_contents()).get();
-         directory *  target_directory = static_cast<directory*>(target_file);
-         if(target_directory->dirents.empty()) {
-            dirents.erase(filename);
-         }
-         else {
+   inode_ptr target = dirents.at (filename);
+   if (target != nullptr) {
+      if (target->get_content_type () == file_type::DIRECTORY_TYPE) {
+         base_file* target_file = (target->get_contents ()).get ();
+         directory* target_directory =
+               static_cast<directory*> (target_file);
+         if (target_directory->dirents.empty ()) {
+            dirents.erase (filename);
+         } else {
             throw file_error ("target directory is not empty");
          }
+      } else {
+         dirents.erase (filename);
       }
-      else {
-         dirents.erase(filename);
-      }
-   }
-   else {
+   } else {
       throw file_error ("file does not exist");
    }
-   
+
    DEBUGF ('i', filename);
 }
 
-inode_ptr directory::mkdir(const string& dirname) {
+inode_ptr directory::mkdir (const string& dirname) {
    DEBUGF ('i', dirname);
    return nullptr;
 }
 
-inode_ptr directory::mkdir (const string& dirname, const inode_ptr parent) {
-   DEBUGF ( 'i', dirname);
-   inode_ptr new_dir = make_shared<inode>(file_type::DIRECTORY_TYPE, parent);
+inode_ptr directory::mkdir (const string& dirname,
+                            const inode_ptr parent) {
+   DEBUGF ('i', dirname);
+   inode_ptr new_dir =
+         make_shared<inode> (file_type::DIRECTORY_TYPE, parent);
    dirents[dirname] = new_dir;
    return new_dir;
 }
 
 inode_ptr directory::mkfile (const string& filename) {
    DEBUGF ('i', filename);
-   inode_ptr new_file = make_shared<inode>(file_type::PLAIN_TYPE);
+   inode_ptr new_file = make_shared<inode> (file_type::PLAIN_TYPE);
    dirents[filename] = new_file;
    return new_file;
 }

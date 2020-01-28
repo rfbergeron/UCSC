@@ -26,7 +26,7 @@ using namespace std;
 
 class ydc_exn: public runtime_error {
    public:
-      explicit ydc_exn (const string& what);
+   explicit ydc_exn (const string& what);
 };
 
 //
@@ -34,14 +34,13 @@ class ydc_exn: public runtime_error {
 //    Convert integer to octal string.
 //
 
-template <typename numeric>
+template<typename numeric>
 const string octal (numeric number) {
    ostringstream stream;
    stream << showbase << oct << number;
-   return stream.str();
+   return stream.str ();
 }
 
-
 //
 // main -
 //    Keep track of execname and exit status.  Must be initialized
@@ -52,14 +51,15 @@ const string octal (numeric number) {
 
 class exec {
    private:
-      static string execname_;
-      static int status_;
-      static void execname (const string& argv0);
-      friend int main (int, char**);
+   static string execname_;
+   static int status_;
+   static void execname (const string& argv0);
+   friend int main (int, char**);
+
    public:
-      static void status (int status);
-      static const string& execname() {return execname_; }
-      static int status() {return status_; }
+   static void status (int status);
+   static const string& execname () { return execname_; }
+   static int status () { return status_; }
 };
 
 //
@@ -70,8 +70,7 @@ class exec {
 //       complain() << filename << ": some problem" << endl;
 //
 
-ostream& note();
-ostream& error();
+ostream& note ();
+ostream& error ();
 
 #endif
-

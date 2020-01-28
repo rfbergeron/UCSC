@@ -1,10 +1,11 @@
-# $Id: Makefile,v 1.21 2018-07-12 16:10:53-07 - - $
+# John Gnanasekaran(jgnanase) and Robert Bergeron (rbergero)
 
 MKFILE      = Makefile
 DEPFILE     = ${MKFILE}.dep
 NOINCL      = ci clean spotless
 NEEDINCL    = ${filter ${NOINCL}, ${MAKECMDGOALS}}
 GMAKE       = ${MAKE} --no-print-directory
+FORMATCPP   = clang-format --style=file -i
 
 GPPOPTS     = -Wall -Wextra -Wold-style-cast -fdiagnostics-color=never
 COMPILECPP  = g++ -std=gnu++17 -g -O0 ${GPPOPTS}
@@ -39,10 +40,10 @@ lis : ${ALLSOURCES}
 	mkpspdf ${LISTING} ${ALLSOURCES}
 
 clean :
-	- rm ${OBJECTS} ${DEPFILE} core
+	- rm -f ${OBJECTS} ${DEPFILE} core
 
 spotless : clean
-	- rm ${EXECBIN} ${LISTING} ${LISTING:.ps=.pdf}
+	- rm -f ${EXECBIN} ${LISTING} ${LISTING:.ps=.pdf} ${DEPFILE}
 
 dep : ${ALLCPPSRC}
 	@ echo "# ${DEPFILE} created `LC_TIME=C date`" >${DEPFILE}
@@ -55,7 +56,9 @@ ${DEPFILE} :
 again :
 	${GMAKE} spotless dep ci all lis
 
+format :
+	${FORMATCPP} ${ALLSOURCE}
+
 ifeq (${NEEDINCL}, )
 include ${DEPFILE}
 endif
-

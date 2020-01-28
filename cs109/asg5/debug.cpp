@@ -1,5 +1,5 @@
-// John Gnanasekaran(jgnanase) and Robert Bergeron (rbergero)
-// $Id: debug.cpp,v 1.12 2018-06-27 14:44:57-07 - - $
+// $Id: debug.cpp,v 1.4 2018-01-25 16:04:38-08 - - $
+// John Gnanasekaran (jgnanase) and Robert Bergeron (rbergero)
 
 #include <climits>
 #include <iostream>
@@ -33,7 +33,7 @@ void debugflags::where (char flag,
                         const char* file,
                         int line,
                         const char* pretty_function) {
-   cout << execname () << ": DEBUG(" << flag << ") " << file << "["
-        << line << "] " << endl
+   cout << sys_info::execname () << ": DEBUG(" << flag << ") " << file
+        << "[" << line << "] " << endl
         << "   " << pretty_function << endl;
 }

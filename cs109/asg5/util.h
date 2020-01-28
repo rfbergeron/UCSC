@@ -1,37 +1,42 @@
-// $Id: util.h,v 1.6 2018-01-25 14:18:43-08 - - $
-// John Gnanasekaran(jgnanase) and Robert Bergeron (rbergero)
+// $Id: util.h,v 1.2 2016-05-04 16:26:26-07 - - $
+// John Gnanasekaran (jgnanase) and Robert Bergeron (rbergero)
 
 //
 // util -
 //    A utility class to provide various services not conveniently
-//    associated with other modules.
+//    included in other modules.
 //
 
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
 #include <iostream>
-#include <list>
+#include <sstream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 using namespace std;
+
+#include "debug.h"
 
 //
 // sys_info -
 //    Keep track of execname and exit status.  Must be initialized
 //    as the first thing done inside main.  Main should call:
-//       sys_info::set_execname (argv[0]);
+//       sys_info::execname (argv[0]);
 //    before anything else.
 //
 
 class sys_info {
+   friend int main (int argc, char** argv);
+
    private:
    static string execname_;
    static int exit_status_;
    static void execname (const string& argv0);
-   friend int main (int argc, char** argv);
 
    public:
+   sys_info () = delete;
    static const string& execname ();
    static void exit_status (int status);
    static int exit_status ();
@@ -46,12 +51,12 @@ const string datestring ();
 
 //
 // split -
-//    Split a string into a list<string>..  Any sequence
+//    Split a string into a vector<string>..  Any sequence
 //    of chars in the delimiter string is used as a separator.  To
 //    Split a pathname, use "/".  To split a shell command, use " ".
 //
 
-list<string> split (const string& line, const string& delimiter);
+vector<string> split (const string& line, const string& delimiter);
 
 //
 // complain -
@@ -73,35 +78,46 @@ ostream& complain ();
 void syscall_error (const string&);
 
 //
-// operator<< (list) -
-//    An overloaded template operator which allows lists to be
+// operator<< (vector) -
+//    An overloaded template operator which allows vectors to be
 //    printed out as a single operator, each element separated from
 //    the next with spaces.  The item_t must have an output operator
 //    defined for it.
 //
 
 template<typename item_t>
-ostream& operator<< (ostream& out, const list<item_t>& vec);
+ostream& operator<< (ostream& out, const vector<item_t>& vec);
+
+//
+// operator<< (pair<iterator,iterator>) -
+//    Allow a pair of iterators to be passed in and print all of the
+//    values between the begin and end pair.
+//
+
+template<typename iterator>
+ostream& operator<< (ostream& out, pair<iterator, iterator> range);
 
 //
 // string to_string (thing) -
 //    Convert anything into a string if it has an ostream<< operator.
 //
 
-template<typename item_t>
-string to_string (const item_t&);
+template<typename type>
+string to_string (const type&);
 
 //
 // thing from_string (cons string&) -
 //    Scan a string for something if it has an istream>> operator.
 //
 
-template<typename item_t>
-item_t from_string (const string&);
+template<typename result_t>
+result_t from_string (const string&);
 
 //
-// Put the RCS Id string in the object file.
+// Demangle a C++ class name.
 //
+template<typename type>
+string demangle (const type& object);
 
 #include "util.tcc"
 #endif

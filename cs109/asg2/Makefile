@@ -10,6 +10,7 @@ GPPOPTS     = ${GPPWARN} -fdiagnostics-color=never
 COMPILECPP  = g++ -std=gnu++17 -g -O0 ${GPPOPTS}
 MAKEDEPCPP  = g++ -std=gnu++17 -MM ${GPPOPTS}
 UTILBIN     = /afs/cats.ucsc.edu/courses/cmps109-wm/bin
+FORMATCPP   = clang-format --style=file -i
 
 MODULES     = commands debug file_sys util
 CPPHEADER   = ${MODULES:=.h}
@@ -39,10 +40,10 @@ lis : ${ALLSOURCES}
 	mkpspdf ${LISTING} ${ALLSOURCES} ${DEPFILE}
 
 clean :
-	- rm ${OBJECTS} ${DEPFILE} core ${EXECBIN}.errs
+	- rm -f ${OBJECTS} ${DEPFILE} core ${EXECBIN}.errs
 
 spotless : clean
-	- rm ${EXECBIN} ${LISTING} ${LISTING:.ps=.pdf}
+	- rm -f ${EXECBIN} ${LISTING} ${LISTING:.ps=.pdf} ${DEPFILE}
 
 
 dep : ${CPPSOURCE} ${CPPHEADER}
@@ -55,6 +56,9 @@ ${DEPFILE} : ${MKFILE}
 
 again :
 	${GMAKE} spotless dep ci all lis
+
+format :
+	${FORMATCPP} ${MODULESRC} ${OTHERSRC}
 
 ifeq (${NEEDINCL}, )
 include ${DEPFILE}

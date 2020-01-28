@@ -1,15 +1,16 @@
-// $Id: util.cpp,v 1.14 2018-01-25 14:18:43-08 - - $
-// John Gnanasekaran(jgnanase) and Robert Bergeron (rbergero)
+// $Id: util.cpp,v 1.1 2015-07-16 16:47:51-07 - - $
+// John Gnanasekaran (jgnanase) and Robert Bergeron (rbergero)
 
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <sstream>
 #include <stdexcept>
 #include <string>
+#include <typeinfo>
 using namespace std;
 
-#include "debug.h"
 #include "util.h"
 
 int sys_info::exit_status_ = EXIT_SUCCESS;
@@ -21,33 +22,33 @@ void sys_info_error (const string& condition) {
 }
 
 void sys_info::execname (const string& argv0) {
-   if (execname_ != "") sys_info_error ("already");
+   if (execname_.size () != 0) sys_info_error ("already");
    int slashpos = argv0.find_last_of ('/') + 1;
    execname_ = argv0.substr (slashpos);
    cout << boolalpha;
    cerr << boolalpha;
-   DEBUGF ('u', "execname_ = " << execname_);
+   DEBUGF ('u', "execname = " << execname_);
 }
 
 const string& sys_info::execname () {
-   if (execname_ == "") sys_info_error ("not yet");
+   if (execname_.size () == 0) sys_info_error ("not yet");
    return execname_;
 }
 
 void sys_info::exit_status (int status) {
-   if (execname_ == "") sys_info_error ("not yet");
+   if (execname_.size () == 0) sys_info_error ("not yet");
    exit_status_ = status;
 }
 
 int sys_info::exit_status () {
-   if (execname_ == "") sys_info_error ("not yet");
+   if (execname_.size () == 0) sys_info_error ("not yet");
    return exit_status_;
 }
 
 const string datestring () {
-   time_t clock = time (nullptr);
+   time_t clock = time (NULL);
    struct tm* tm_ptr = localtime (&clock);
-   char timebuf[256];
+   char timebuf[128];
    strftime (timebuf,
              sizeof timebuf,
              "%a %b %e %H:%M:%S %Z %Y",
@@ -55,11 +56,9 @@ const string datestring () {
    return timebuf;
 }
 
-list<string> split (const string& line, const string& delimiters) {
-   list<string> words;
-   size_t end = 0;
-   // Loop over the string, splitting out words, and for each word
-   // thus found, append it to the output list<string>.
+vector<string> split (const string& line, const string& delimiters) {
+   vector<string> words;
+   int end = 0;
    for (;;) {
       size_t start = line.find_first_not_of (delimiters, end);
       if (start == string::npos) break;

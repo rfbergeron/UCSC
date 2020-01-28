@@ -1,9 +1,0 @@
-partnercheck: partner = "jgnanase"
-partnercheck: ./PARTNER: format OK:
-username = "jgnanase"
-passwd   = "*"
-uid      = "220213"
-gid      = "100"
-gecos    = "John Samuel Gnanasekaran"
-home     = "/afs/cats.ucsc.edu/users/w/jgnanase"
-shell    = "/bin/bash"

@@ -1,45 +1,41 @@
 // John Gnanasekaran(jgnanase) and Robert Bergeron (rbergero)
 // $Id: util.cpp,v 1.11 2016-01-13 16:21:53-08 - - $
 
-#include <cstdlib>
 #include <unistd.h>
+
+#include <cstdlib>
 
 using namespace std;
 
-#include "util.h"
 #include "debug.h"
+#include "util.h"
 
 int exit_status::status = EXIT_SUCCESS;
 static string execname_string;
 
-void exit_status::set (int new_status) {
-   status = new_status;
-}
+void exit_status::set (int new_status) { status = new_status; }
 
-int exit_status::get() {
-   return status;
-}
+int exit_status::get () { return status; }
 
 void execname (const string& name) {
-   execname_string =  name.substr (name.rfind ('/') + 1);
+   execname_string = name.substr (name.rfind ('/') + 1);
    DEBUGF ('u', execname_string);
 }
 
-string& execname() {
-   return execname_string;
-}
+string& execname () { return execname_string; }
 
-bool want_echo() {
+bool want_echo () {
    constexpr int CIN_FD {0};
    constexpr int COUT_FD {1};
    bool cin_is_not_a_tty = not isatty (CIN_FD);
    bool cout_is_not_a_tty = not isatty (COUT_FD);
-   DEBUGF ('u', "cin_is_not_a_tty = " << cin_is_not_a_tty
-          << ", cout_is_not_a_tty = " << cout_is_not_a_tty);
+   DEBUGF ('u',
+           "cin_is_not_a_tty = " << cin_is_not_a_tty
+                                 << ", cout_is_not_a_tty = "
+                                 << cout_is_not_a_tty);
    return cin_is_not_a_tty or cout_is_not_a_tty;
 }
 
-
 wordvec split (const string& line, const string& delimiters) {
    wordvec words;
    size_t end = 0;
@@ -56,9 +52,8 @@ wordvec split (const string& line, const string& delimiters) {
    return words;
 }
 
-ostream& complain() {
+ostream& complain () {
    exit_status::set (EXIT_FAILURE);
-   cerr << execname() << ": ";
+   cerr << execname () << ": ";
    return cerr;
 }
-

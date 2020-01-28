@@ -1,5 +1,5 @@
-// John Gnanasekaran(jgnanase) and Robert Bergeron (rbergero)
-// $Id: debug.cpp,v 1.12 2018-06-27 14:44:57-07 - - $
+// John Gnanasekaran (jgnanase) and Robert Bergeron (rbergero)
+// $Id: debug.cpp,v 1.2 2018-01-25 14:12:59-08 - - $
 
 #include <climits>
 #include <iostream>
@@ -8,11 +8,11 @@
 using namespace std;
 
 #include "debug.h"
-#include "util.h"
 
 debugflags::flagset debugflags::flags {};
 
 void debugflags::setflags (const string& initflags) {
+   cerr << "setting flags" << endl;
    for (const unsigned char flag : initflags) {
       if (flag == '@')
          flags.set ();
@@ -27,13 +27,4 @@ void debugflags::setflags (const string& initflags) {
 bool debugflags::getflag (char flag) {
    // WARNING: Don't TRACE this function or the stack will blow up.
    return flags.test (static_cast<unsigned char> (flag));
-}
-
-void debugflags::where (char flag,
-                        const char* file,
-                        int line,
-                        const char* pretty_function) {
-   cout << execname () << ": DEBUG(" << flag << ") " << file << "["
-        << line << "] " << endl
-        << "   " << pretty_function << endl;
 }

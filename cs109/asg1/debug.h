@@ -19,12 +19,15 @@ using namespace std;
 //
 class debugflags {
    private:
-      static vector<bool> flags;
+   static vector<bool> flags;
+
    public:
-      static void setflags (const string& optflags);
-      static bool getflag (char flag);
-      static void where (char flag, const char* file, int line,
-                         const char* pretty_function);
+   static void setflags (const string& optflags);
+   static bool getflag (char flag);
+   static void where (char flag,
+                      const char* file,
+                      int line,
+                      const char* pretty_function);
 };
 
 //
@@ -37,19 +40,24 @@ class debugflags {
 //    will print two words and a newline if flag 'u' is  on.
 //    Traces are preceded by filename, line number, and function.
 //
-#define DEBUGF(FLAG,CODE) { \
-           if (debugflags::getflag (FLAG)) { \
-              debugflags::where (FLAG, __FILE__, __LINE__, \
-                                 __PRETTY_FUNCTION__); \
-              cerr << CODE << endl; \
-           } \
-        }
-#define DEBUGS(FLAG,STMT) { \
-           if (debugflags::getflag (FLAG)) { \
-              debugflags::where (FLAG, __FILE__, __LINE__, \
-                                 __PRETTY_FUNCTION__); \
-              STMT; \
-           } \
-        }
+#define DEBUGF(FLAG, CODE)                        \
+   {                                              \
+      if (debugflags::getflag (FLAG)) {           \
+         debugflags::where (FLAG,                 \
+                            __FILE__,             \
+                            __LINE__,             \
+                            __PRETTY_FUNCTION__); \
+         cerr << CODE << endl;                    \
+      }                                           \
+   }
+#define DEBUGS(FLAG, STMT)                        \
+   {                                              \
+      if (debugflags::getflag (FLAG)) {           \
+         debugflags::where (FLAG,                 \
+                            __FILE__,             \
+                            __LINE__,             \
+                            __PRETTY_FUNCTION__); \
+         STMT;                                    \
+      }                                           \
+   }
 #endif
-

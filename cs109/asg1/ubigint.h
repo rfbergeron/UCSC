@@ -14,27 +14,28 @@ using namespace std;
 
 class ubigint {
    friend ostream& operator<< (ostream&, const ubigint&);
+
    private:
-      using udigit_t = unsigned char;
-      using ubigvalue_t = vector<udigit_t>;
-      ubigvalue_t ubig_value;
+   using udigit_t = unsigned char;
+   using ubigvalue_t = vector<udigit_t>;
+   ubigvalue_t ubig_value;
+
    public:
-      void multiply_by_2();
-      void divide_by_2();
+   void multiply_by_2 ();
+   void divide_by_2 ();
 
-      ubigint() = default; // Need default ctor as well.
-      ubigint (ubigvalue_t that);
-      ubigint (const string&);
+   ubigint () = default;   // Need default ctor as well.
+   ubigint (ubigvalue_t that);
+   ubigint (const string&);
 
-      ubigint operator+ (const ubigint&) const;
-      ubigint operator- (const ubigint&) const;
-      ubigint operator* (const ubigint&) const;
-      ubigint operator/ (const ubigint&) const;
-      ubigint operator% (const ubigint&) const;
+   ubigint operator+ (const ubigint&) const;
+   ubigint operator- (const ubigint&) const;
+   ubigint operator* (const ubigint&) const;
+   ubigint operator/ (const ubigint&) const;
+   ubigint operator% (const ubigint&) const;
 
-      bool operator== (const ubigint&) const;
-      bool operator<  (const ubigint&) const;
+   bool operator== (const ubigint&) const;
+   bool operator< (const ubigint&) const;
 };
 
 #endif
-

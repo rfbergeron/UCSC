@@ -1,20 +1,22 @@
 // $Id: main.cpp,v 1.11 2018-01-25 14:19:29-08 - - $
+// John Gnanasekaran(jgnanase) and Robert Bergeron (rbergero)
+
+#include <unistd.h>
 
 #include <cstdlib>
 #include <exception>
-#include <iostream>
-#include <string>
-#include <unistd.h>
 #include <fstream>
+#include <iostream>
 #include <regex>
+#include <string>
 
 using namespace std;
 
 #include "listmap.h"
-#include "xpair.h"
 #include "util.h"
+#include "xpair.h"
 
-using str_str_map = listmap<string,string>;
+using str_str_map = listmap<string, string>;
 using str_str_pair = str_str_map::value_type;
 
 void scan_options (int argc, char** argv) {
@@ -27,8 +29,8 @@ void scan_options (int argc, char** argv) {
             debugflags::setflags (optarg);
             break;
          default:
-            complain() << "-" << char (optopt) << ": invalid option"
-                       << endl;
+            complain () << "-" << char (optopt) << ": invalid option"
+                        << endl;
             break;
       }
    }
@@ -36,62 +38,113 @@ void scan_options (int argc, char** argv) {
 
 int main (int argc, char** argv) {
    sys_info::execname (argv[0]);
-
    scan_options (argc, argv);
-
-   // Before processing, each input line echo out to cout
-   // preceeded by filename, line # from file
-   // Name of cin printed with '-' sign
-
    regex comment_regex {R"(^\s*(#.*)?$)"};
    regex key_value_regex {R"(^\s*(.*?)\s*=\s*(.*?)\s*$)"};
    regex trimmed_regex {R"(^\s*([^=]+?)\s*$)"};
-
-   ifstream infile("test.txt");
-   string line;
+   // since istream is an ancestor of std::cin and can
+   // be instantiated so long as we have a filebuf,
+   // we can create an istream pointer and tell it to
+   // point at cin if the user does not provide any arguments
+   //
+   // pointer was necessary since istream has no copy
+   // constructor. also im not very knowledgeable about this
+   // but copying std::cin sounds like a bad idea even if it
+   // is possible
+   filebuf file;
+   istream* input = nullptr;
+   string input_line;
+   str_str_map the_map;
    smatch result;
-  while (getline(infile, line)) {
-    if(infile.peek()!=EOF){
-      if(regex_search (line, result, comment_regex )){
-         // search found comment, print line to output
-         cout << "comment regex found, print out line.." << endl;
-         cout << "line: " << line << endl;
+
+   // for loop doesnt terminate when i == argc to allow for
+   // the loop to continue when argc == 1, in which case cin
+   // will be read
+   for (int i = 1; i <= argc; i++) {
+      if (i == argc) {
+         if (i > 1) break;
+         DEBUGF ('y', "reading from cin now\n");
+         input = &cin;
+         input->ignore ();
+      } else {
+         // needed to add extra if statement since for loop
+         // doesnt terminate when i == argc
+         DEBUGF ('a', "opening file " << argv[i]);
+         file.open (argv[i], ios::in);
+         input = new istream (&file);
       }
-      if(regex_search (line, result, key_value_regex)){
-         cout << "comment regex found, print out key: val: ..." << endl;
-         // Need to call insert function with
-         // key: result[1]
-         // value: result[2]
-         cout << "line: " << line << endl;
-         cout << "key = " << result[1] << endl;
-         cout << "value = " << result[2] << endl;
-      } else if(regex_search (line, result, trimmed_regex)){
-         cout << "trimmer regex found..." << endl;
-         cout << "line: " << line << endl;
-            // Only a = sign with key
-            cout << "key = " << result[1] << endl;
-            // Only a = sign with value
-            cout << "value = " << result[2] << endl;
+
+      string input_name = argc == 1 ? "-" : argv[i];
+      unsigned int line_number = 1;
+
+      for (;;) {
+         getline (*input, input_line);
+         if ((*input).eof ()) {
+            input->ignore ();
+            if (file.is_open ()) {
+               DEBUGF ('a', "closing" << argv[i]);
+               file.close ();
+               delete input;
+            }
+            DEBUGF ('a', "moving to next file");
+            break;
+         }
+         DEBUGF ('a', "moving on to line " << line_number);
+
+         cout << input_name << ": " << line_number << ": " << input_line
+              << endl;
+
+         if (regex_search (input_line, result, comment_regex)) {
+            DEBUGF ('y', "Comment or empty line.");
+         } else if (regex_search (input_line, result, trimmed_regex)) {
+            str_str_map::iterator iter = the_map.find (result[1]);
+            if (iter != the_map.end ()) {
+               cout << *iter << endl;
+            } else {
+               cout << result[1] << ": value not found" << endl;
+            }
+         } else if (regex_search (input_line,
+                                  result,
+                                  key_value_regex)) {
+            str_str_pair pair (result[1], result[2]);
+
+            if (result[1] == "") {
+               str_str_map::iterator iter = the_map.begin ();
+               if (result[2] == "") {
+                  // exectues if current line is exactly "="
+                  // should print all keys in map
+                  while (iter != the_map.end ()) {
+                     cout << *iter << endl;
+                     ++iter;
+                  }
+               } else {
+                  // executes if current line is of the form "=b"
+                  // should print all keys with value b to cout
+                  while (iter != the_map.end ()) {
+                     if ((*iter).second == result[2]) {
+                        cout << *iter << endl;
+                     }
+                     ++iter;
+                  }
+               }
+            } else if (result[2] == "") {
+               // executes if current line is of the form "a="
+               // should delete key-value pair a, if it exists
+               str_str_map::iterator loc = the_map.find (result[1]);
+               if (loc != the_map.end ()) {
+                  the_map.erase (loc);
+               }
+            } else {
+               // exectues if current line is of the form "a=b"
+               // should insert new or reassign existing key
+               cout << result[1] << " = " << result[2] << endl;
+               the_map.insert (pair);
+            }
+         }
+         ++line_number;
       }
-    }
-  }
-
-   str_str_map test;
-   for (char** argp = &argv[optind]; argp != &argv[argc]; ++argp) {
-      str_str_pair pair (*argp, to_string<int> (argp - argv));
-      cout << "Before insert: " << pair << endl;
-      test.insert (pair);
    }
-
-   for (str_str_map::iterator itor = test.begin();
-        itor != test.end(); ++itor) {
-      cout << "During iteration: " << *itor << endl;
-   }
-
-   str_str_map::iterator itor = test.begin();
-   test.erase (itor);
 
    cout << "EXIT_SUCCESS" << endl;
    return EXIT_SUCCESS;
 }
-

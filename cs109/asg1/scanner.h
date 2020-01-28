@@ -9,29 +9,29 @@ using namespace std;
 
 #include "debug.h"
 
-enum class tsymbol {SCANEOF, NUMBER, OPERATOR};
+enum class tsymbol { SCANEOF, NUMBER, OPERATOR };
 
 struct token {
    tsymbol symbol;
    string lexinfo;
-   token (tsymbol sym, const string& lex = string()):
-          symbol(sym), lexinfo(lex){
-   }
+   token (tsymbol sym, const string& lex = string ()):
+         symbol (sym),
+         lexinfo (lex) {}
 };
 
 class scanner {
    private:
-      istream& instream;
-      int nextchar {instream.get()};
-      bool good() { return nextchar != EOF; }
-      char get();
+   istream& instream;
+   int nextchar {instream.get ()};
+   bool good () { return nextchar != EOF; }
+   char get ();
+
    public:
-      scanner (istream& instream = cin): instream(instream) {}
-      token scan();
+   scanner (istream& instream = cin): instream (instream) {}
+   token scan ();
 };
 
 ostream& operator<< (ostream&, tsymbol);
 ostream& operator<< (ostream&, const token&);
 
 #endif
-

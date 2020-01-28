@@ -1,5 +1,5 @@
-// John Gnanasekaran(jgnanase) and Robert Bergeron (rbergero)
-// $Id: debug.h,v 1.10 2018-01-25 14:02:55-08 - - $
+// $Id: debug.h,v 1.4 2018-01-25 16:04:38-08 - - $
+// John Gnanasekaran (jgnanase) and Robert Bergeron (rbergero)
 
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
@@ -34,8 +34,8 @@ class debugflags {
 };
 
 // DEBUGF -
-//    Macro which expands into trace code.  First argument is a
-//    trace flag char, second argument is output code that can
+//    Macro which expands into debug code.  First argument is a
+//    debug flag char, second argument is output code that can
 //    be sandwiched between <<.  Beware of operator precedence.
 //    Example:
 //       DEBUGF ('u', "foo = " << foo);
