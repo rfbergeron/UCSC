@@ -12,7 +12,6 @@ GPPWARN     = -Wall -Wextra -Werror -Wpedantic -Wshadow -Wold-style-cast
 GPPOPTS     = ${GPPWARN} -fdiagnostics-color=never
 COMPILECPP  = g++ -std=gnu++17 -g -O0 ${GPPOPTS}
 MAKEDEPCPP  = g++ -std=gnu++17 -MM ${GPPOPTS}
-UTILBIN     = /afs/cats.ucsc.edu/courses/cmps109-wm/bin
 
 MODULES     = debug logstream protocol sockets
 EXECBINS    = ${CIXEXEC} ${CIXDEXEC}
@@ -37,17 +36,10 @@ cixd: ${CIXDOBJS}
 	${COMPILECPP} -o $@ ${CIXDOBJS}
 
 %.o: %.cpp
-	- ${UTILBIN}/checksource $<
-	- ${UTILBIN}/cpplint.py.perl $<
 	${COMPILECPP} -c $<
 
 ci: ${ALLSOURCE}
-	${UTILBIN}/cid + ${ALLSOURCE}
-	- ${UTILBIN}/checksource ${ALLSOURCE}
-
-lis: all ${ALLSOURCE} ${DEPFILE}
-	- pkill gv
-	${UTILBIN}/mkpspdf ${LISTING} ${ALLSOURCE} ${DEPFILE}
+	git add ${ALLSOURCE}
 
 clean:
 	- rm -f ${LISTING} ${LISTING:.ps=.pdf} ${CLEANOBJS} core
@@ -55,7 +47,6 @@ clean:
 spotless: clean
 	- rm -f ${EXECBINS} ${DEPFILE}
 
-
 dep: ${ALLCPPSRC}
 	@ echo "# ${DEPFILE} created `LC_TIME=C date`" >${DEPFILE}
 	${MAKEDEPCPP} ${ALLSOURCE} >>${DEPFILE}
@@ -65,7 +56,7 @@ ${DEPFILE}:
 	${GMAKE} dep
 
 again: ${ALLSOURCE}
-	${GMAKE} spotless dep ci all lis
+	${GMAKE} spotless dep ci all
 
 format:
 	${FORMATCPP} ${wildcard ${SOURCELIST}}

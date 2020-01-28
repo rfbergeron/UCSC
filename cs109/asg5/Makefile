@@ -40,8 +40,7 @@ colors.cppgen: mk-colors.perl
 	perl mk-colors.perl >colors.cppgen
 
 ci : ${ALLSOURCES}
-	${UTILBIN}/cid + ${ALLSOURCES}
-	- ${UTILBIN}/checksource ${ALLSOURCES}
+	- git add ${SOURCES} ${MKFILE}
 
 lis : ${ALLSOURCES}
 	${UTILBIN}/mkpspdf ${LISTING} ${ALLSOURCES}

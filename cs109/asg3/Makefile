@@ -28,13 +28,10 @@ ${EXECBIN} : ${OBJECTS}
 	${COMPILECPP} -o $@ ${OBJECTS}
 
 %.o : %.cpp
-	- ${UTILBIN}/checksource $<
-	- ${UTILBIN}/cpplint.py.perl $<
 	${COMPILECPP} -c $<
 
 ci : ${ALLSOURCES}
-	${UTILBIN}/cid + ${ALLSOURCES}
-	- ${UTILBIN}/checksource ${ALLSOURCES}
+	git add ${ALLSOURCE} ${MKFILE}
 
 lis : ${ALLSOURCES}
 	mkpspdf ${LISTING} ${ALLSOURCES}

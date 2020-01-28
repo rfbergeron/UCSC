@@ -9,7 +9,6 @@ GPPWARN     = -Wall -Wextra -Wold-style-cast -Werror
 GPPOPTS     = ${GPPWARN} -fdiagnostics-color=never
 COMPILECPP  = g++ -std=gnu++17 -g -O0 ${GPPOPTS}
 MAKEDEPCPP  = g++ -std=gnu++17 -MM ${GPPOPTS}
-UTILBIN     = /afs/cats.ucsc.edu/courses/cmps109-wm/bin
 FORMATCPP   = clang-format --style=file -i
 
 MODULES     = ubigint bigint libfns scanner debug util
@@ -28,13 +27,10 @@ ${EXECBIN} : ${OBJECTS}
 	${COMPILECPP} -o $@ ${OBJECTS}
 
 %.o : %.cpp
-	- ${UTILBIN}/checksource $<
-	- ${UTILBIN}/cpplint.py.perl $<
 	${COMPILECPP} -c $<
 
 ci : ${ALLSOURCES}
-	${UTILBIN}/cid + ${ALLSOURCES}
-	- ${UTILBIN}/checksource ${ALLSOURCES}
+	git add ${ALLSOURCES}
 
 lis : ${ALLSOURCES}
 	mkpspdf ${LISTING} ${ALLSOURCES} ${DEPFILE}
