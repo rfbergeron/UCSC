@@ -1,0 +1,113 @@
+\documentclass{article}
+
+% If you're new to LaTeX, here's some short tutorials:
+% https://www.overleaf.com/learn/latex/Learn_LaTeX_in_30_minutes
+% https://en.wikibooks.org/wiki/LaTeX/Basics
+
+% Formatting
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage[titletoc,title]{appendix}
+
+% Math
+% https://www.overleaf.com/learn/latex/Mathematical_expressions
+% https://en.wikibooks.org/wiki/LaTeX/Mathematics
+\usepackage{amsmath,amsfonts,amssymb,mathtools}
+
+% Images
+% https://www.overleaf.com/learn/latex/Inserting_Images
+% https://en.wikibooks.org/wiki/LaTeX/Floats,_Figures_and_Captions
+\usepackage{graphicx,float}
+
+% Tables
+% https://www.overleaf.com/learn/latex/Tables
+% https://en.wikibooks.org/wiki/LaTeX/Tables
+
+% Algorithms
+% https://www.overleaf.com/learn/latex/algorithms
+% https://en.wikibooks.org/wiki/LaTeX/Algorithms
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{algorithmic}
+
+% Code syntax highlighting
+% pdflatex requires a flag to compile with this package and it doesn't
+% seem to do anything useful
+% https://www.overleaf.com/learn/latex/Code_Highlighting_with_minted
+%\usepackage{minted}
+%\usemintedstyle{borland}
+
+% References
+% https://www.overleaf.com/learn/latex/Bibliography_management_in_LaTeX
+% https://en.wikibooks.org/wiki/LaTeX/Bibliography_Management
+\usepackage{biblatex}
+\addbibresource{references.bib}
+
+% Title content
+\title{AM214 Homework 2, Numerical Part}
+\author{Robert Bergeron}
+\date{October 28, 2020}
+
+\begin{document}
+
+\maketitle
+
+% Question 2
+\section*{Question 2}
+
+This equation is a subcritical pitchfork. In this case, at \(r = -1\) there
+is only one, stable fixed point at \(x_* = 0\), so the tendency of \(x\) to
+approach \(0\) is not going to change at time approaches infinity.
+
+Linearizing \(\frac{dx}{dt} = rx + x^3 - x^5\) about \(x_* = 0, r = -1\), we get
+\[f(x) = (x - x_*)\frac{\partial f}{\partial x} + (r - r_*)\frac{\partial f}{\partial r}
+= (x - x_*)(-1) + (r - r_*)(0) = -x\]
+
+Then, we solve the differential equation \(\frac{dx}{dt} = -x\) as follows:
+\[\frac{dx}{x} = -dt\]
+\[\int \frac{dx}{x} = - \int dt\]
+\[\ln x = -t + C\]
+\[x = e^{-t + C} = De^{-t}\]
+
+Since our numerical solution had inital conditions \(x_* = 0.01, t = 0\), we can
+substitute those here to solve for \(D\), finding that \(D = 0.01\).
+
+% Question 3
+\section*{Question 3}
+In light of what we discussed in class, the function \(x_*(r_{increasing})\)
+demonstrates convergence jumping between stable branches as a result of small
+disturbances in a function that has the property of hysterisis.
+
+On the interval \(-\infty < r < -\frac{1}{4}\), \(x_* = 0\) is the only fixed point
+that exists, \(x_*(r)\) converges to zero and our initial condition(s)
+\(x = 0.01 + x_{prev}\) will remain close to \(0.01\).
+
+Once \(r\) has reached \(-\frac{1}{4}\), we still find that the function converges
+to \(0\) since our initial condition is closer to it than any other stable branch.
+
+However, as \(r\) passes \(0\), the fixed point at \(x_* = 0\) becomes unstable and
+the convergence point rapidly shifts to the positive
+stable branch of the bifurcation, since our initial condition is being displaced in
+the positive direction. As \(r\) approaches \(\infty\), \(x_*(r)\) continues along
+the positive stable branch of the bifurcation.
+
+\pagebreak
+
+% Question 4
+\section*{Question 4}
+Taken together, the functions \(x_*(r_{increasing})\), \(x_*(r_{decreasing})\),
+and \(x_*(r_{numerical})\) demonstrate the effects of small perturbations of
+the initial condition and \(r\) in a function that exhibits hysterisis.
+
+\(x_*(r_{inc})\) and \(x_*(r_{dec})\) both have initial conditions starting at
+\(x(0) = 0\), but because the bifurcation has different stable branches that vary
+with \(r\), experimental results obtained by decreasing \(r\) near the bifurcation
+point and tweaking \(x_*\) will be different from those yielded by increasing \(r\)
+near the bifurcation point.
+
+Like \(x_*(r_{inc})\), \(x_*(r_{dec})\) jumps from the stable branch on
+\(r = x_*^4 - x_*^2\) to \(x_* = 0\) once \(r < -\frac{1}{4}\). However, there
+is one difference, in that the fixed points for branch \(r = x_*^4 - x_*^2\)
+\emph{disappear} when \(r < -\frac{1}{4}\), instead of merely becoming unstable,
+like the fixed point \(x_* = 0\) at \(r = 0\).
+
+\end{document}

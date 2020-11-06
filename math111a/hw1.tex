@@ -1,0 +1,206 @@
+\documentclass{article}
+
+% If you're new to LaTeX, here's some short tutorials:
+% https://www.overleaf.com/learn/latex/Learn_LaTeX_in_30_minutes
+% https://en.wikibooks.org/wiki/LaTeX/Basics
+
+% Formatting
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage[titletoc,title]{appendix}
+
+% Math
+% https://www.overleaf.com/learn/latex/Mathematical_expressions
+% https://en.wikibooks.org/wiki/LaTeX/Mathematics
+\usepackage{amsmath,amsfonts,amssymb,mathtools}
+
+% Images
+% https://www.overleaf.com/learn/latex/Inserting_Images
+% https://en.wikibooks.org/wiki/LaTeX/Floats,_Figures_and_Captions
+\usepackage{graphicx,float}
+
+% Tables
+% https://www.overleaf.com/learn/latex/Tables
+% https://en.wikibooks.org/wiki/LaTeX/Tables
+
+% Algorithms
+% https://www.overleaf.com/learn/latex/algorithms
+% https://en.wikibooks.org/wiki/LaTeX/Algorithms
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{algorithmic}
+
+% Code syntax highlighting
+% https://www.overleaf.com/learn/latex/Code_Highlighting_with_minted
+\usepackage{minted}
+\usemintedstyle{borland}
+
+% References
+% https://www.overleaf.com/learn/latex/Bibliography_management_in_LaTeX
+% https://en.wikibooks.org/wiki/LaTeX/Bibliography_Management
+\usepackage{biblatex}
+\addbibresource{references.bib}
+
+% Title content
+\title{MATH 111a Homework 1}
+\author{Robert Bergeron}
+\date{October 16, 2020}
+
+\begin{document}
+
+\maketitle
+
+% Introduction and Overview
+\section*{Page 35}
+
+% Problem 3
+\subsection*{Problem 3}
+    For arbitrary \(a,b \in G\), we have
+    \begin{align*}
+        (ab)^2 & = a^2b^2 \\
+        (ab) (ab) & = (aa) (bb)
+    \end{align*}
+    The order of the operands is different, yet the values are equal, so the elements
+    of \(G\) commute and it is therefore abelian.
+
+% Problem 6
+\subsection*{Problem 6}
+    Let \(S_3 = \{e, \psi, \psi^2, \phi, \phi*\psi, \psi*\phi\}\), \(x = \psi\),
+    \(y = \phi\). Then,
+    \begin{align*}
+        (\psi*\phi)^2 & = \psi*(\phi*\psi)*\phi \\
+                      & = \psi*(\psi^{-1}*\phi)*\phi \\
+                      & = (\psi*\psi^{-1})*\phi^2 \\
+                      & = e*\phi^2 \\
+                      & = \phi^2 \\
+                      & = e \\
+                      \text{On the other hand, } \\
+        \psi^2*\phi^2 & = \psi^2*e \\
+                      & = \psi^2 \\
+    \end{align*}
+
+% Problem 10
+\subsection*{Problem 10}
+    Suppose \(a,b \in G, a \ne b\), show \(ab = ba\)
+    given that all elements in \(G\) are their own inverse. \\
+
+    By the property of this group, we have \(a = a^{-1}\), \(b = b^{-1}\), and
+    \(ab = (ab)^{-1}\). Expanding out the latter, we get \(ab = b^{-1}a^{-1} = ba\),
+    showing that the elements of \(G\) commute and therefore that G is abelian.
+
+% Problem 11
+    \subsection*{Problem 11}
+        G is a group, so each element has an inverse. There are \(2n, n \in \mathbb{Z}^+\)
+        elements in \(G\), and \(e\) is its own inverse, leaving us with \(2n-1\)
+        elements whose inverses are unknown. The inverse of an arbitrary element \(a\),
+        which we shall refer to as \(a^{-1}\), must be unique. If we were to attempt to
+        pair off the elements of \(G\) in order to find an inverse, we would be unable
+        to do so as there are an odd number, excluding \(e\). There must then be one
+        element, \(b\), left over, which is its own inverse, hence \(b^2 = e\).
+
+% Problem 12
+    \subsection*{Problem 12}
+        G is closed under an associative product, which satisfies the first two
+        prerequisites for being a group. All that remains is to prove that inverses
+        and the identity element exist under the given conditions.
+
+        \begin{enumerate}
+            \item Identity: by (a), \(ee = e\), and therefore under (b), \(y(e) = e\). \\
+                \(ae = a \rightarrow ae = ee^{-1}a \rightarrow ae = eea \rightarrow
+                  ae = ea = a\) and \(e\) is the identity element.
+            \item Inverses: Since the element \(y(a)\) for arbitrary \(a \in G\) described
+                in (b) is also a member of \(G\), it follows that (b) likewise applies
+                to \(y(a)\), such that \(\exists \; y(y(a))\) where \(y(a) * y(y(a)) = e\).\\
+                From there:
+                \begin{align*}
+                    y(a) * y(y(a)) = e \\
+                    a * y(a) * y(y(a)) = a * e \\
+                    (a * y(a) * y(y(a)) = a \\
+                    y(y(a)) = a \\
+                    y(a) * a = a \\
+                \end{align*}
+
+                And \(y(a)\) is a true inverse, and \(G\) is a group.
+        \end{enumerate}
+
+\section*{Page 46}
+
+% Problem 1
+    \subsection*{Problem 1}
+        \(H \cap K\) contains at least one element, \(e\).
+        Since \(H \cap K\) is at the very least a nonempty subset of \(G\), by lemma 2.4.1,
+        we need only prove that:
+        \begin{enumerate}
+            \item \(a,b \in H \cap K \rightarrow ab \in H \cap K\): the former statement
+                implies \(a \in H,K\) and \(b \in H,K\) and by virtue of being subgroups,
+                \(ab \in H,K\), which implies \(ab \in H \cap K\).
+            \item \(a \in H \cap K \rightarrow a^{-1} \in H \cap K\): the former
+                statement requires that \(a \in H,K\), and by virtue of being subgroups,
+                \(a^{-1} \in H,K\), which implies \(a^{-1} \in H \cap K\).
+        \end{enumerate}
+
+% Problem 4
+    \subsection*{Problem 4}
+    \subsubsection*{a)}
+        We perform this proof in the same way as problem 1:
+        \begin{enumerate}
+            \item Let \(ah_1a^{-1},ah_2a^{-1} \in aHa^{-1}\). Take
+                \((ah_1a^{-1})*(ah_2a^{-1}) = ah_1(aa^{-1})h_2a^{-1} = ah_1h_2a^{-1}\).
+                Since \(h_1h_2 \in H\), it follows that \(ah_1h_2a^{-1} \in aHa^{-1}\).
+            \item Let \(aha^{-1} \in H\). It's inverse is \((aha^{-1})^{-1}) =
+                ah^{-1}a^{-1}\), which is in \(aHa^{-1}\), since \(h^{-1} \in H\).
+        \end{enumerate}
+        Therefore, \(aHa^{-1}\) is a subgroup of \(G\).
+    \subsubsection*{b)}
+        Since \(aHa^{-1}\) is \(H\) multiplied by \(a\) on the left and \(a^{-1}\) on
+        the right, \(o(aHa^{-1}) = o(H)\).
+
+% Problem 6
+    \subsection*{Problem 6}
+            \[G = \{e, a, a^2, \dots, a^9\} \]
+    \subsubsection*{a)}
+            \[H = \{e, a^2, a^4, a^6, a^8\} \]
+        \begin{enumerate}
+            \item \(He = \{e, a^2, a^4, a^6, a^8\}\)
+            \item \(Ha = \{a, a^3, a^5, a^7, a^9\}\)
+        \end{enumerate}
+    \subsubsection*{b)}
+            \[H = \{e, a^5\}\]
+        \begin{enumerate}
+            \item \(He = \{e, a^5\}\)
+            \item \(Ha = \{a, a^6\}\)
+            \item \(Ha = \{a^2, a^7\}\)
+            \item \(Ha = \{a^3, a^8\}\)
+            \item \(Ha = \{a^4, a^9\}\)
+        \end{enumerate}
+    \subsubsection*{c)}
+        Did not complete.
+
+% Problem 13
+    \subsection*{Problem 13}
+        \begin{enumerate}
+            \item Let \(x_1,x_2 \in N(a)\).
+                \begin{align*}
+                    x_1a & = ax_1 \\
+                    x_2x_1a & = x_2ax_1 \\
+                    x_2x_1a & = ax_2x_1 \text{ Since } x_2a = ax_2 \\
+                    (x_2x_1)a & = a(x_2x_1) \\
+                \end{align*}
+                So \(x_2x_1 \in N(a)\)
+            \item Let \(x \in N(a)\).
+                \begin{align*}
+                    a = & \; axx^{-1} = xax^{-1} &
+                        \text{ Trivially, and by the given property} \\
+                    a = & \; xx^{-1}a            & \text{ Trivially } \\
+                    xax^{-1} = & \; xx^{-1}a     & \text{ Since both equal \(a\) }\\
+                    x^{-1} * xax^{-1} = & \; x^{-1} * xx^{-1}a \\
+                    ax^{-1} = & \; x^{-1}a \\
+                \end{align*}
+                So \(x^{-1}\) has the same property as \(x\) and is therefore also in
+                \(N(a)\).
+        \end{enumerate}
+        Therefore, \(N(a)\) is a subgroup of \(G\).
+\end{document}
+
+% Problem 14
+    \subsection*{Problem 14}
+    Did not complete.

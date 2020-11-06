@@ -1,0 +1,119 @@
+\documentclass{article}
+
+% If you're new to LaTeX, here's some short tutorials:
+% https://www.overleaf.com/learn/latex/Learn_LaTeX_in_30_minutes
+% https://en.wikibooks.org/wiki/LaTeX/Basics
+
+% Formatting
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage[titletoc,title]{appendix}
+
+% Math
+% https://www.overleaf.com/learn/latex/Mathematical_expressions
+% https://en.wikibooks.org/wiki/LaTeX/Mathematics
+\usepackage{amsmath,amsfonts,amssymb,mathtools}
+
+% Images
+% https://www.overleaf.com/learn/latex/Inserting_Images
+% https://en.wikibooks.org/wiki/LaTeX/Floats,_Figures_and_Captions
+\usepackage{graphicx,float}
+
+% Tables
+% https://www.overleaf.com/learn/latex/Tables
+% https://en.wikibooks.org/wiki/LaTeX/Tables
+
+% Algorithms
+% https://www.overleaf.com/learn/latex/algorithms
+% https://en.wikibooks.org/wiki/LaTeX/Algorithms
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{algorithmic}
+
+% Code syntax highlighting
+% https://www.overleaf.com/learn/latex/Code_Highlighting_with_minted
+\usepackage{minted}
+\usemintedstyle{borland}
+
+% References
+% https://www.overleaf.com/learn/latex/Bibliography_management_in_LaTeX
+% https://en.wikibooks.org/wiki/LaTeX/Bibliography_Management
+\usepackage{biblatex}
+\addbibresource{references.bib}
+
+% Title content
+\title{AM214 Homework 1, Numerical Part}
+\author{Robert Bergeron}
+\date{October 19, 2020}
+
+\begin{document}
+
+\maketitle
+
+% Problem 1
+\section{}
+\[ \frac{dN}{dt} = r_0N(1- \frac{N}{K}) \]
+First, we shall convert \(N\) to \(\hat{N}\).
+
+\begin{align*}
+    \frac{d\hat{N}}{dt} = \frac{1}{K}\frac{dN}{dt} \text{, or } \frac{dN}{dt} & = K\frac{d\hat{N}}{dt}
+    & \quad \text{Start by taking the derivative of \(\hat{N}\) with respect to \(t\)} \\
+    K\frac{d\hat{N}}{dt} & = r_0K\hat{N}(1 - \hat{N})
+    & \quad \text{Perform the substitution} \\
+    \quad \frac{d\hat{N}}{dt} & = r_0\hat{N}(1 - \hat{N}) \\
+    \frac{d\hat{t}}{dt} & = r_0
+    & \quad \text{Then, we do the same thing for \(\hat{t}\)} \\
+    \frac{d\hat{N}}{dt} & = \frac{d\hat{N}}{d\hat{t}}\frac{d\hat{t}}{dt} = \frac{d\hat{N}}{d\hat{t}}r_0 \\
+    \frac{d\hat{N}}{d\hat{t}}r_0 & = r_0\hat{N}(1 - \hat{N}) \\
+    \frac{d\hat{N}}{d\hat{t}} & = \hat{N}(1 - \hat{N}) \\
+\end{align*}
+
+The equation we are left with is equivalent to the logistic equation where both
+the carrying capacity, \(K\) and the growth rate, \(r_0\), are one.
+
+% Problem 2
+\section{}
+This function has fixed points at \(0\) and \(1\), which can be seen easily
+by looking at \(\frac{d\hat{N}}{d\hat{t}}\). If we set
+\(\hat{n}(\hat{t}) = \frac{d\hat{N}}{d\hat{t}}\) and take the derivative of this
+function, we find that \(\hat{n}'(\hat{t}) = -2\hat{N} + 1\). We evaluate at
+the fixed points, getting \(\hat{n}'(0) = 1\) and \(\hat{n}'(1) = -1\). \(0\)
+is then an unstable fixed point, while \(1\) is stable.
+
+The flow diagram would depict the slope approaching zero the closer \(\hat{N}\)
+came to the line \(\hat{N} = 1\), and approaching \(-\infty\). The closer the
+initiat condition is to one, the smoother the curve becomes. Like the logistic
+equation, the function the flow diagram characterizes would be sigmoid, or s-shaped,
+given that the function demonstrates the Allee effect.
+
+\pagebreak
+
+% Problem 3
+\section{}
+The numerical results pretty much reflect what I got out of my analysis. Though I
+should probably have noted that solutions would only be sigmoid if their inital
+condition was between zero and one. Otherwise, they just asymptotically approach
+one (in case the initial condition was above one), or approach infinity (in case
+the initial condition was below zero).
+
+% Problem 4
+\section{}
+\(\frac{d\hat{N}}{d\hat{t}}\) is a Bernoulli equation, so we solve it by substitution.
+\begin{align*}
+    \frac{d\hat{N}}{d\hat{t}} - \hat{N} & = -\hat{N}^2 \\
+    \hat{N}^{-2}\frac{d\hat{N}}{d\hat{t}} - \hat{N}^{-1} & = -1 & \quad \text{ let } v = \hat{N}^{-1}, \frac{dv}{d\hat{t}} = -\hat{N}^{-2}\frac{d\hat{N}}{d\hat{t}} \\
+    -\frac{dv}{d\hat{t}} - v & = -1 \\
+    \frac{dv}{d\hat{t}} + v & = 1 & \quad p(t) = 1, \; \mu(t) = e^{\int d\hat{t}} = e^{t} \\
+    \int \lparen e^{t}\frac{dv}{d\hat{t}} + e^{t}v \rparen & = \int e^{t} \\
+    ve^{t} & = e^{t} + c \\
+    v & = \frac{e^{t} + c}{e^{t}} \\
+    \frac{1}{\hat{N}} & = \frac{e^{t} + c}{e^{t}} & \text{reverse the substitution} \\
+    \hat{N} & = \frac{e^t}{e^t + c} & \text{do a little algebra} \\
+\end{align*}
+Plugging in the arbitrary inital condition \(\hat{N}(0) = \hat{N}_0\), we find that
+\(\hat{N}_0 = \frac{1}{1 + c}\), which, with some work, give us that
+\(c = \frac{1 - \hat{N}_0}{\hat{N}_0}\). We replace \(c\) by this and finally arrive
+at the analytical solution for arbitrary \(\hat{N}_0\):
+\[ \hat{N}(t) = \frac{e^{\hat{t}}}{e^{\hat{t}} + \frac{1 - \hat{N}_0}{\hat{N}_0}}
+              = \frac{\hat{N}_0e^{\hat{t}}}{\hat{N}_0(e^{\hat{t}} - 1) + 1} \]
+
+\end{document}
