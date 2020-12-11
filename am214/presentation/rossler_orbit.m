@@ -1,10 +1,10 @@
-% the important part of this orbit is between 2.8 and 6.0
+% the important part of this orbit is between 2.5 and 6.0
 % rs = 0.126:0.001:0.432;
-rs = 2.8:0.01:6.0;
+rs = 2.5:0.01:6.0;
 Y0 = [0.1,0.1,0.1];
 tspan = 0:0.001:400;
 
-figure(3);
+figure(5);
 hold on;
 
 % compute the maps in parallel because it's quite time-consuming

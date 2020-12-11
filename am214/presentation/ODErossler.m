@@ -4,9 +4,9 @@ ystart = [0.1,0.1,0.1]
 % ystart = [5,-28,28]
 
 % Write here the vector tspan as tinit : dt : tfinal
-tspan = 0:0.01:300;
+tspan = 0:0.01:400;
 
-% plotstart = 0.25 * (length(tspan) - 1);
+% plotstart = floor(0.20 * (length(tspan) - 1));
 plotstart = 1;
 
 % This solves the ODE system defined in the sub-function "dydt.m" and 
@@ -15,9 +15,9 @@ plotstart = 1;
 % tspan = [tinit tfinal] without specifying dt then the solver chooses
 % the times of output and returns them in the vector t
 
-rossler2 = @(t,y) rossler(t,y,4);
+rossler2 = @(t,y) rossler(t,y,5.7);
 [t,ytmp] = ode45(rossler2,tspan,ystart);
-theta = -pi / 4;
+theta = -3 * pi / 16;
 rot = [cos(theta), -sin(theta), 0;
        sin(theta),  cos(theta), 0;
        0         ,  0         , 1];
@@ -29,12 +29,14 @@ y = (rot * ytmp')';
 % This plots y(t)
 % Example to plot y_1(t), y_2(t) and y_3(t) on the same plot
 figure(1)
+clf
 hold on
 plot(t(plotstart:end),y(plotstart:end,1),'b')
 plot(t(plotstart:end),y(plotstart:end,2),'r')
 plot(t(plotstart:end),y(plotstart:end,3),'--k')
 xlabel("t")
 legend("x","y","z")
+hold off
 
 % Example to plot y_3(t) vs y_1(t) and y_2(t) (Butterfly diagram).
 figure(2)
